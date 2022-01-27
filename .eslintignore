@@ -3,3 +3,4 @@ dist
 tsconfig.json
 jest.ts-config.js
 webpack.config.js
+src/grid.ts

@@ -654,6 +654,11 @@
     jest-diff "^27.0.0"
     pretty-format "^27.0.0"
 
+"@types/js-yaml@^4.0.5":
+  version "4.0.5"
+  resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-4.0.5.tgz#738dd390a6ecc5442f35e7f03fa1431353f7e138"
+  integrity sha512-FhpRzf927MNQdRZP0J5DLIdTXhjLYzeUTmLAu69mnVksLH9CJY3IuSeEgbKUki7GQZm0WqDkGzyxju2EZGD2wA==
+
 "@types/json-schema@*", "@types/json-schema@^7.0.8", "@types/json-schema@^7.0.9":
   version "7.0.9"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.9.tgz#97edc9037ea0c38585320b28964dde3b39e4660d"
@@ -2909,19 +2914,19 @@ nwsapi@^2.2.0:
   resolved "https://registry.yarnpkg.com/nwsapi/-/nwsapi-2.2.0.tgz#204879a9e3d068ff2a55139c2c772780681a38b7"
   integrity sha512-h2AatdwYH+JHiZpv7pt/gSX1XoRGb7L/qSIeuqA6GwYoF9w1vP1cw42TO0aI2pNyshRK5893hNSl+1//vHK7hQ==
 
-oca.js-form-core@^0.0.12:
-  version "0.0.12"
-  resolved "https://registry.yarnpkg.com/oca.js-form-core/-/oca.js-form-core-0.0.12.tgz#0ef75c291d5eaa900b299f460d3a1e763b95a0b3"
-  integrity sha512-Q+6LML6yBOQrv/eouArLWzMUqComA7DFnL9VHKjHCpQOspAHM6Pa3/Mqkv6rHar6B81/aCmH1Huf8r1PVBduqw==
+oca.js-form-core@^0.0.13:
+  version "0.0.13"
+  resolved "https://registry.yarnpkg.com/oca.js-form-core/-/oca.js-form-core-0.0.13.tgz#816c5bce3536c5d212107e386b1caf7faafcea2f"
+  integrity sha512-YjXdxiLhNYDxVhTuJc9NxVxUHjcaHvO0SydU4HCgcsDx33kXW0OCF8RyHwCA875QTeZeT2zEcRbzNq+OQ+pCRg==
   dependencies:
     axios "^0.24.0"
     jszip "^3.7.1"
-    oca.js "0.1.25"
+    oca.js "0.1.27"
 
-oca.js@0.1.25:
-  version "0.1.25"
-  resolved "https://registry.yarnpkg.com/oca.js/-/oca.js-0.1.25.tgz#71cb67d7a4c085b63ef8c3bddf91842724b52959"
-  integrity sha512-jw/INkb5Bq56U1dGjgQMa92EY24lLiFQvUev9JMkCtkmcob+fP2uoOi/o4D3BYcjJfd3hpLdUyGzjsfk9GV/Mw==
+oca.js@0.1.27:
+  version "0.1.27"
+  resolved "https://registry.yarnpkg.com/oca.js/-/oca.js-0.1.27.tgz#bfe22103b9878dc2504a13b0779aea30debb6bf6"
+  integrity sha512-6tcqH95LFnkiEoULwVuPTvjK9z+2YVdJEjQvQ0/L8z3+BiZnjvrYPbEB2I53WnkrmvdtHixCYuU19PJSwUhNNA==
 
 once@^1.3.0:
   version "1.4.0"
