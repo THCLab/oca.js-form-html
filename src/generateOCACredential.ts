@@ -13,9 +13,14 @@ export const generateOCACredential = (
   iframe.style.cssText = 'width: 100%; height: 100%; border: none;'
   iframe.scrolling = 'no'
   const iframeHead = document.createElement('head')
-  const iframeStyle = document.createElement('style')
-  iframeStyle.innerText = gridCss
-  iframeHead.appendChild(iframeStyle)
+  if (layout.config.style) {
+    const iframeStyle = document.createElement('style')
+    iframeStyle.innerText = layout.config.style + iframeStyle.innerText
+    iframeHead.appendChild(iframeStyle)
+  }
+  const iframeGridStyle = document.createElement('style')
+  iframeGridStyle.innerText = gridCss
+  iframeHead.appendChild(iframeGridStyle)
   const iframeBody = document.createElement('body')
   iframeBody.style.cssText = 'margin: 0;'
 

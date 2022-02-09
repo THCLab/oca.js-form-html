@@ -2,6 +2,7 @@ export type CredentialLayout = {
   config: {
     width?: string
     height?: string
+    style?: string
   }
   pages: {
     config?: {
