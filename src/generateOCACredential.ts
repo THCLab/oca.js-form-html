@@ -117,9 +117,16 @@ export const generateOCACredential = (
             const attr = structure.controls.find(el => el.name == element.name)
             switch (element.part) {
               case 'data':
-                el = document.createElement('div')
-                if (data[element.name]) {
-                  el.innerText = data[element.name]
+                if (attr.type == 'Binary') {
+                  el = document.createElement('img')
+                  if (data[element.name]) {
+                    (el as HTMLImageElement).src = data[element.name]
+                  }
+                } else {
+                  el = document.createElement('div')
+                  if (data[element.name]) {
+                    el.innerText = data[element.name]
+                  }
                 }
                 break
               case 'label':

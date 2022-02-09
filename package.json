@@ -1,6 +1,6 @@
 {
   "name": "oca.js-form-html",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "files": [
     "dist/*"
   ],
@@ -36,6 +36,6 @@
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
-    "oca.js-form-core": "^0.0.13"
+    "oca.js-form-core": "^0.0.14"
   }
 }

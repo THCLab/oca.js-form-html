@@ -2914,10 +2914,10 @@ nwsapi@^2.2.0:
   resolved "https://registry.yarnpkg.com/nwsapi/-/nwsapi-2.2.0.tgz#204879a9e3d068ff2a55139c2c772780681a38b7"
   integrity sha512-h2AatdwYH+JHiZpv7pt/gSX1XoRGb7L/qSIeuqA6GwYoF9w1vP1cw42TO0aI2pNyshRK5893hNSl+1//vHK7hQ==
 
-oca.js-form-core@^0.0.13:
-  version "0.0.13"
-  resolved "https://registry.yarnpkg.com/oca.js-form-core/-/oca.js-form-core-0.0.13.tgz#816c5bce3536c5d212107e386b1caf7faafcea2f"
-  integrity sha512-YjXdxiLhNYDxVhTuJc9NxVxUHjcaHvO0SydU4HCgcsDx33kXW0OCF8RyHwCA875QTeZeT2zEcRbzNq+OQ+pCRg==
+oca.js-form-core@^0.0.14:
+  version "0.0.14"
+  resolved "https://registry.yarnpkg.com/oca.js-form-core/-/oca.js-form-core-0.0.14.tgz#b7031c06546118b0be0214ab229e484130ee1522"
+  integrity sha512-RaAoJi1WnK6rk1Lc4s+1TSSv825uWx38OP6w0hyA8a7bfugvom+YVhqzE62kQaoHBEHN4HfQFvwr9xz/TrUPrw==
   dependencies:
     axios "^0.24.0"
     jszip "^3.7.1"
