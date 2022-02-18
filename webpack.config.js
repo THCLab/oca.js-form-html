@@ -1,4 +1,5 @@
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const path = require('path');
 
 module.exports = {
@@ -13,13 +14,23 @@ module.exports = {
   },
   resolve: {
     extensions: [ ".ts", ".js" ],
-    alias: {
-      "@": path.resolve(__dirname, "src")
-    },
+    plugins: [new TsconfigPathsPlugin({})],
     fallback: {
+      "assert": false,
+      "buffer": false,
+      "http": false,
+      "https": false,
+      "stream": false,
+      "tls": false,
+      "net": false,
+      "child_process": false,
+      "string_decoder": false,
       "fs": false,
+      "os": false,
+      "url": false,
       "util": false,
-      "path": false
+      "path": false,
+      "zlib": false
     }
   },
   module: {

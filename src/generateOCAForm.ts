@@ -1,9 +1,16 @@
 import type { Structure } from 'oca.js-form-core'
 import type { FormLayout } from 'types'
-import { JSDOM } from 'jsdom'
 
-const dom = new JSDOM()
-let document = dom.window.document
+let document: Document
+
+if (typeof window === 'undefined') {
+  /* eslint-disable */
+  const { JSDOM } = require('jsdom')
+  const dom = new JSDOM()
+  document = dom.window.document
+} else {
+  document = window.document
+}
 
 export const generateOCAForm = (
   structure: Structure,
