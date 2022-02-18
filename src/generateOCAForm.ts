@@ -1,5 +1,9 @@
 import type { Structure } from 'oca.js-form-core'
-import type { FormLayout } from './types'
+import type { FormLayout } from 'types'
+import { JSDOM } from 'jsdom'
+
+const dom = new JSDOM()
+let document = dom.window.document
 
 export const generateOCAForm = (
   structure: Structure,

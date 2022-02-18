@@ -1,7 +1,7 @@
 import type { Structure } from 'oca.js-form-core'
-import type { CredentialLayout, FormLayout } from '@/types'
-import { generateOCACredential } from '@/generateOCACredential'
-import { generateOCAForm } from '@/generateOCAForm'
+import type { CredentialLayout, FormLayout } from 'types'
+import { generateOCACredential } from 'generateOCACredential'
+import { generateOCAForm } from 'generateOCAForm'
 import yaml from 'js-yaml'
 
 export const renderOCAForm = (structure: Structure): string => {

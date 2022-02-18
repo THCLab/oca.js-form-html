@@ -1,6 +1,6 @@
 import type { Structure } from 'oca.js-form-core'
-import type { CredentialLayout } from './types'
-import { gridCss } from './grid'
+import type { CredentialLayout } from 'types'
+import { gridCss } from 'grid'
 
 export const generateOCACredential = (
   structure: Structure,

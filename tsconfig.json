@@ -4,7 +4,7 @@
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
     "module": "CommonJS",
-    "target": "ES2021",
+    "target": "ES2017",
     "noImplicitAny": true,
     "preserveConstEnums": true,
     "outDir": "./build",
@@ -12,10 +12,10 @@
     "alwaysStrict": true,
     "moduleResolution": "Node",
     "noErrorTruncation": true,
-    "baseUrl": "./",
+    "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
+      "*": [
+        "src/*"
       ],
       "@tests/*": [ "./tests/*" ]
     },
@@ -24,6 +24,9 @@
     ],
     "types": [
       "node", "jest"
+    ],
+    "plugins": [
+      { "transform": "typescript-transform-paths", "exclude": [ "**/node_modules/**" ] }
     ]
   },
   "include": [
