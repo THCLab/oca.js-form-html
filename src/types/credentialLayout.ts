@@ -13,6 +13,11 @@ export type CredentialLayout = {
     }
     elements: ElementLayout[]
   }[]
+  labels?: {
+    [name: string]: {
+      [language: string]: string
+    }
+  }
 }
 
 type ElementLayout = BaseElementLayout &
@@ -43,11 +48,12 @@ type MetaLayout = {
 
 type ContentLayout = {
   type: 'content'
-  text: string
+  text?: string
+  label?: string
 }
 
 type AttributeLayout = {
   type: 'attribute'
   name: string
-  part: 'data' | 'label' | 'information'
+  part: 'data' | 'code' | 'label' | 'information'
 }

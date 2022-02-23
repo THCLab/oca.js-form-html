@@ -99,7 +99,11 @@ export const generateOCACredential = (
             break
           case 'content':
             el = document.createElement('div')
-            el.innerText = element.text
+            if (element.text) {
+              el.innerText = element.text
+            } else if (element.label) {
+              el.innerText = layout.labels[element.label][language]
+            }
             break
           case 'meta':
             switch (element.part) {
@@ -122,11 +126,22 @@ export const generateOCACredential = (
                   if (data[element.name]) {
                     (el as HTMLImageElement).src = data[element.name]
                   }
+                } else if (attr.type == 'Select') {
+                  el = document.createElement('div')
+                  if (attr.translations[language].entries && data[element.name]) {
+                    el.innerText = attr.translations[language].entries[data[element.name]]
+                  }
                 } else {
                   el = document.createElement('div')
                   if (data[element.name]) {
                     el.innerText = data[element.name]
                   }
+                }
+                break
+              case 'code':
+                el = document.createElement('div')
+                if (data[element.name]) {
+                  el.innerText = data[element.name]
                 }
                 break
               case 'label':
