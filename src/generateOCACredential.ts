@@ -13,9 +13,9 @@ export const generateOCACredential = (
   iframe.style.cssText = 'width: 100%; height: 100%; border: none;'
   iframe.scrolling = 'no'
   const iframeHead = document.createElement('head')
-  if (layout.config.style) {
+  if (layout.config.css && layout.config.css.style) {
     const iframeStyle = document.createElement('style')
-    iframeStyle.innerText = layout.config.style + iframeStyle.innerText
+    iframeStyle.innerText = layout.config.css.style + iframeStyle.innerText
     iframeHead.appendChild(iframeStyle)
   }
   const iframeGridStyle = document.createElement('style')
@@ -62,13 +62,13 @@ export const generateOCACredential = (
       const pageDiv = document.createElement('div')
       pageDiv.className = 'page'
       pageDiv.classList.add('page-' + i)
-      if (page.config) {
-        if (page.config.style) {
-          pageDiv.style.cssText = page.config.style
+      if (page.config && page.config.css) {
+        if (page.config.css.style) {
+          pageDiv.style.cssText = page.config.css.style
         }
 
-        if (page.config.background_image) {
-          const imageSAI = page.config.background_image.replace('SAI:', '')
+        if (page.config.css.background_image) {
+          const imageSAI = page.config.css.background_image.replace('SAI:', '')
           pageDiv.style.cssText += `background-image: url("${config.dataVaultUrl}/${imageSAI}");`
         }
       }
@@ -157,12 +157,12 @@ export const generateOCACredential = (
           }
         }
 
-        if (element.config) {
-          if (element.config.style) {
-            el.style.cssText = element.config.style
+        if (element.config && element.config.css) {
+          if (element.config.css.style) {
+            el.style.cssText = element.config.css.style
           }
-          if (element.config.classes) {
-            el.classList.add(...element.config.classes)
+          if (element.config.css.classes) {
+            el.classList.add(...element.config.css.classes)
           }
         }
 

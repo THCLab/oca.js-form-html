@@ -1,14 +1,18 @@
 export type CredentialLayout = {
   config: {
-    width?: string
-    height?: string
-    style?: string
+    css?: {
+      width?: string
+      height?: string
+      style?: string
+    }
   }
   pages: {
     config?: {
-      background_image?: string
-      style?: string
-      classes?: string[]
+      css?: {
+        background_image?: string
+        style?: string
+        classes?: string[]
+      }
       name?: string
     }
     elements: ElementLayout[]
@@ -25,8 +29,10 @@ type ElementLayout = BaseElementLayout &
 
 type BaseElementLayout = {
   config?: {
-    style?: string
-    classes?: string
+    css?: {
+      style?: string
+      classes?: string
+    }
   }
 }
 

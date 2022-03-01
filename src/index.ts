@@ -26,8 +26,8 @@ export const renderOCACredential = (
   return {
     node: generateOCACredential(structure, data, config, layout).outerHTML,
     config: {
-      width: layout.config.width,
-      height: layout.config.height
+      width: layout.config.css.width,
+      height: layout.config.css.height
     },
     pageNumber: layout.pages.length
   }
