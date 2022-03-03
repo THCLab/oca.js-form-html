@@ -21,6 +21,15 @@ export const generateOCACredential = (
   const iframeGridStyle = document.createElement('style')
   iframeGridStyle.innerText = gridCss
   iframeHead.appendChild(iframeGridStyle)
+  if (layout.classes) {
+    const classesStyle = document.createElement('style')
+    Object.entries(layout.classes).forEach(
+      ([name, classDefinition]: [string, { style: string }]) => {
+        classesStyle.innerHTML += `.${name}{${classDefinition.style}}`
+      }
+    )
+    iframeHead.appendChild(classesStyle)
+  }
   const iframeBody = document.createElement('body')
   iframeBody.style.cssText = 'margin: 0;'
 
