@@ -30,7 +30,14 @@ export type CredentialLayout = {
 }
 
 type ElementLayout = BaseElementLayout &
-  (RowLayout | ColLayout | MetaLayout | ContentLayout | AttributeLayout)
+  (
+    | RowLayout
+    | ColLayout
+    | MetaLayout
+    | TextLayout
+    | LayoutLabelLayout
+    | AttributeLayout
+  )
 
 type BaseElementLayout = {
   config?: {
@@ -57,14 +64,16 @@ type MetaLayout = {
   part: 'name' | 'description'
 }
 
-type ContentLayout = {
-  type: 'content'
-  text?: string
-  label?: string
+type TextLayout = {
+  type: 'text'
+  content: string
+}
+type LayoutLabelLayout = {
+  type: 'layout-label'
+  name: string
 }
 
 type AttributeLayout = {
-  type: 'attribute'
+  type: 'attribute' | 'code' | 'label' | 'information'
   name: string
-  part: 'data' | 'code' | 'label' | 'information'
 }
