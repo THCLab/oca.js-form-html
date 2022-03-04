@@ -1,4 +1,5 @@
 export type CredentialLayout = {
+  version: string
   config: {
     css?: {
       width?: string
