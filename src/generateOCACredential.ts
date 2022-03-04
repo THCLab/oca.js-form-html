@@ -15,7 +15,7 @@ export const generateOCACredential = (
   const iframeHead = document.createElement('head')
   if (layout.config.css && layout.config.css.style) {
     const iframeStyle = document.createElement('style')
-    iframeStyle.innerText = layout.config.css.style + iframeStyle.innerText
+    iframeStyle.innerHTML = layout.config.css.style + iframeStyle.innerText
     iframeHead.appendChild(iframeStyle)
   }
   const iframeGridStyle = document.createElement('style')
