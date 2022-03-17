@@ -23,11 +23,6 @@ export type CredentialLayout = {
       [language: string]: string
     }
   }
-  classes?: {
-    [name: string]: {
-      style: string
-    }
-  }
 }
 
 type ElementLayout = BaseElementLayout &
