@@ -10,7 +10,7 @@ export const renderOCAForm = (
   config: {
     showPii?: boolean
     defaultLanguage?: string
-    onSubmitHandler?: (capturedData: any) => void
+    onSubmitHandler?: (capturedData: { [key: string]: string }) => void
   } = {}
 ): string => {
   return generateOCAForm(

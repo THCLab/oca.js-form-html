@@ -6,7 +6,7 @@ declare module 'oca.js-form-html' {
     config: {
       showPii?: boolean
       defaultLanguage?: string
-      onSubmitHandler?: (capturedData: { [key: string]: any }) => void
+      onSubmitHandler?: (capturedData: { [key: string]: string }) => void
     }
   ) => string
   const renderOCACredential: (
