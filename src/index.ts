@@ -4,9 +4,19 @@ import { generateOCACredential } from 'generateOCACredential'
 import { generateOCAForm } from 'generateOCAForm'
 import yaml from 'js-yaml'
 
-export const renderOCAForm = (structure: Structure): string => {
+export const renderOCAForm = (
+  structure: Structure,
+  data = {},
+  config: {
+    showPii?: boolean
+    defaultLanguage?: string
+    onSubmitHandler?: (capturedData: any) => void
+  } = {}
+): string => {
   return generateOCAForm(
     structure,
+    data,
+    config,
     yaml.load(structure.formLayout, { schema: yaml.JSON_SCHEMA }) as FormLayout
   ).outerHTML
 }

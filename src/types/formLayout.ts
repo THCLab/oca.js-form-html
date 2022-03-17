@@ -1,16 +1,50 @@
 export type FormLayout = {
-  rows: {
-    config?: {
+  config?: {
+    css?: {
       style?: string
-      classes?: string[]
     }
-    elements: {
-      type: 'meta' | 'image' | 'category' | 'attribute'
-      name: string
-      style?: string
-      base64?: string
-      classes?: string[]
-      layout?: FormLayout
-    }[]
+  }
+  elements: ElementLayout[]
+}
+
+type ElementLayout = BaseElementLayout &
+  (MetaLayout | ContentLayout | CategoryLayout | AttributeLayout)
+
+type BaseElementLayout = {
+  config?: Config
+}
+
+type Config = {
+  css?: {
+    style?: string
+    classes?: string[]
+  }
+}
+
+type MetaLayout = {
+  type: 'meta'
+  parts: {
+    name: 'name' | 'description' | 'language'
+    config?: Config
+  }[]
+}
+
+type ContentLayout = {
+  type: 'content'
+  text: string
+  image?: string
+}
+
+type CategoryLayout = {
+  type: 'category'
+  id: string
+}
+
+type AttributeLayout = {
+  type: 'attribute'
+  name: string
+  parts: {
+    name: 'input' | 'label' | 'information'
+    config?: Config
   }[]
 }
