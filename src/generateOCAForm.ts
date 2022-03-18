@@ -388,7 +388,7 @@ const generateControlInput = (
       input.classList.add('_input')
       input.setAttribute('type', 'text')
       break
-    case 'Number':
+    case 'Numeric':
       input.classList.add('_input')
       input.setAttribute('type', 'number')
       break
