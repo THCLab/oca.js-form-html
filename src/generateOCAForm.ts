@@ -1,5 +1,4 @@
 import type { Structure } from 'oca.js-form-core'
-import type { FormLayout } from 'types'
 
 let document: Document
 
@@ -19,9 +18,9 @@ export const generateOCAForm = (
     showPii?: boolean
     defaultLanguage?: string
     onSubmitHandler?: (capturedData: { [key: string]: any }) => void
-  },
-  layout: FormLayout
+  }
 ): HTMLElement => {
+  const layout = structure.formLayout
   const availableLanguages = Object.keys(structure.translations)
   let defaultLanguage = availableLanguages[0]
   if (config.defaultLanguage) {

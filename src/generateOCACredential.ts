@@ -1,13 +1,12 @@
 import type { Structure } from 'oca.js-form-core'
-import type { CredentialLayout } from 'types'
 import { gridCss } from 'grid'
 
 export const generateOCACredential = (
   structure: Structure,
   data: { [key: string]: string },
-  config: { dataVaultUrl?: string },
-  layout: CredentialLayout
+  config: { dataVaultUrl?: string }
 ): HTMLElement => {
+  const layout = structure.credentialLayout
   const iframe = document.createElement('iframe')
   iframe.id = 'credential'
   iframe.style.cssText = 'width: 100%; height: 100%; border: none;'
@@ -79,7 +78,7 @@ export const generateOCACredential = (
       }
 
       const renderElement = (
-        element: CredentialLayout['pages'][0]['elements'][0]
+        element: Structure['credentialLayout']['pages'][0]['elements'][0]
       ) => {
         let el: HTMLElement
         switch (element.type) {
@@ -105,17 +104,13 @@ export const generateOCACredential = (
             el = document.createElement('div')
             el.innerText = element.content
             break
-          case 'meta':
-            switch (element.part) {
-              case 'name':
-                el = document.createElement('div')
-                el.innerText = structure.translations[language].name
-                break
-              case 'description':
-                el = document.createElement('div')
-                el.innerText = structure.translations[language].description
-                break
-            }
+          case 'oca-name':
+            el = document.createElement('div')
+            el.innerText = structure.translations[language].name
+            break
+          case 'oca-description':
+            el = document.createElement('div')
+            el.innerText = structure.translations[language].description
             break
           case 'attribute': {
             const attr = structure.controls.find(el => el.name == element.name)

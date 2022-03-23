@@ -1,8 +1,6 @@
 import type { Structure } from 'oca.js-form-core'
-import type { CredentialLayout, FormLayout } from 'types'
 import { generateOCACredential } from 'generateOCACredential'
 import { generateOCAForm } from 'generateOCAForm'
-import yaml from 'js-yaml'
 
 export const renderOCAForm = (
   structure: Structure,
@@ -13,12 +11,7 @@ export const renderOCAForm = (
     onSubmitHandler?: (capturedData: { [key: string]: string }) => void
   } = {}
 ): string => {
-  return generateOCAForm(
-    structure,
-    data,
-    config,
-    yaml.load(structure.formLayout, { schema: yaml.JSON_SCHEMA }) as FormLayout
-  ).outerHTML
+  return generateOCAForm(structure, data, config).outerHTML
 }
 
 export const renderOCACredential = (
@@ -30,11 +23,9 @@ export const renderOCACredential = (
   config: { width: string; height: string }
   pageNumber: number
 } => {
-  const layout = yaml.load(structure.credentialLayout, {
-    schema: yaml.JSON_SCHEMA
-  }) as CredentialLayout
+  const layout = structure.credentialLayout
   return {
-    node: generateOCACredential(structure, data, config, layout).outerHTML,
+    node: generateOCACredential(structure, data, config).outerHTML,
     config: {
       width: layout.config.css.width,
       height: layout.config.css.height
