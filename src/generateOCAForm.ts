@@ -171,6 +171,9 @@ export const generateOCAForm = (
       sections: Structure['sections']
     }
 
+    form: HTMLFormElement
+    hiddenControls: Set<string>
+
     static get observedAttributes() {
       return ['language', 'structure']
     }
@@ -178,6 +181,7 @@ export const generateOCAForm = (
     constructor() {
       super()
       this.structure = null
+      this.hiddenControls = new Set()
       const shadow = this.attachShadow({ mode: 'open' })
 
       const template = document.createElement('template')
@@ -210,20 +214,76 @@ export const generateOCAForm = (
           toggle(e.target)
         }
       })
-      const formEl = shadow.querySelector('form')
-      formEl.onsubmit = e => {
+      this.form = shadow.querySelector('form')
+      this.form.oninput = e => {
+        // @ts-ignore
+        if (e.target.classList.contains('_input')) {
+          // @ts-ignore
+          this.controlInputChanged(e.target.getAttribute('name'))
+        }
+      }
+
+      this.form.onsubmit = _ => {
         if (config.onSubmitHandler) {
-          config.onSubmitHandler(
-            this.captureFormData(e.target as HTMLFormElement)
+          const capturedData = this.captureFormData()
+          this.hiddenControls.forEach(
+            controlName => delete capturedData[controlName]
           )
+          config.onSubmitHandler(capturedData)
         }
         return false
       }
     }
 
-    captureFormData(form: HTMLFormElement) {
+    controlInputChanged(controlName: string) {
+      const capturedData = this.captureFormData()
+      this.structure.controls.forEach(c => {
+        if (c.dependencies?.includes(controlName)) {
+          this.evaluateControlCondition(c, capturedData)
+        }
+      })
+    }
+
+    evaluateControlCondition(
+      control: Structure['controls'][0],
+      capturedData: { [k: string]: string }
+    ) {
+      const varPlaceholders = control.condition.match(/\${\d+}/g) || []
+      const placeholersValue: { [placeholder: string]: string } = {}
+      varPlaceholders.forEach(placeholder => {
+        const index = parseInt(placeholder.match(/\d+/)[0])
+        const dependencyName = control.dependencies[index]
+        placeholersValue[placeholder] = capturedData[dependencyName]
+      })
+      let condition = control.condition
+        .split('‘')
+        .join("'")
+        .split('’')
+        .join("'")
+      Object.entries(placeholersValue).forEach(([placeholder, value]) => {
+        condition = condition.split(placeholder).join(`'${value}'`)
+      })
+
+      let controlDiv: HTMLElement
+      while (!controlDiv) {
+        let node: HTMLElement = this.form.querySelector(`#${control.name}`)
+        while (!node.classList.contains('_control')) {
+          node = node.parentElement
+        }
+        controlDiv = node
+      }
+      if (eval(condition)) {
+        this.hiddenControls.delete(control.name)
+        controlDiv.style.display = null
+      } else {
+        this.hiddenControls.add(control.name)
+        controlDiv.style.display = 'none'
+      }
+    }
+
+    captureFormData() {
       const capturedData: { [k: string]: any } = {}
-      const formData = new FormData(form)
+      const formData = new FormData(this.form)
       this.structure.controls.forEach(c => {
         capturedData[c.name] = ''
         switch (c.type) {
@@ -247,6 +307,15 @@ export const generateOCAForm = (
       })
 
       return capturedData
+    }
+
+    connectedCallback() {
+      const capturedData = this.captureFormData()
+      this.structure.controls.forEach(c => {
+        if (c.condition) {
+          this.evaluateControlCondition(c, capturedData)
+        }
+      })
     }
 
     attributeChangedCallback(
