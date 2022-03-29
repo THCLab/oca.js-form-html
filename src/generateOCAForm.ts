@@ -272,7 +272,7 @@ export const generateOCAForm = (
         }
         controlDiv = node
       }
-      if (eval(condition)) {
+      if (evaluateCondition(condition)) {
         this.hiddenControls.delete(control.name)
         controlDiv.style.display = null
       } else {
@@ -496,4 +496,8 @@ const generateControlInput = (
   }
 
   return input
+}
+
+const evaluateCondition = (condition: string) => {
+  return Function('"use strict";return (' + condition + ')')()
 }
