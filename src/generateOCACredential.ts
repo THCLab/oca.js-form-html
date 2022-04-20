@@ -10,22 +10,22 @@ export const generateOCACredential = (
   const iframe = document.createElement('iframe')
   iframe.id = 'credential'
   iframe.style.cssText = 'width: 100%; height: 100%; border: none;'
-  iframe.scrolling = 'no'
+  iframe.scrolling = (!layout.config?.css?.height || !layout.config?.css?.width) ? 'yes' : 'no'
   const iframeHead = document.createElement('head')
-  if (layout.config.css && layout.config.css.style) {
+  if (layout.config && layout.config.css && layout.config.css.style) {
     const iframeStyle = document.createElement('style')
-    iframeStyle.innerHTML = layout.config.css.style + iframeStyle.innerText
+    iframeStyle.innerHTML = layout.config.css.style
     iframeHead.appendChild(iframeStyle)
   }
   const iframeGridStyle = document.createElement('style')
-  iframeGridStyle.innerText = gridCss
+  iframeGridStyle.innerHTML = gridCss
   iframeHead.appendChild(iframeGridStyle)
   const iframeBody = document.createElement('body')
-  iframeBody.style.cssText = 'margin: 0;'
 
   const availableLanguages = Object.keys(structure.translations)
   const languageSelect = document.createElement('select')
   languageSelect.id = 'language-select'
+  languageSelect.className = 'language-select'
   availableLanguages.forEach(lang => {
     const option = document.createElement('option')
     option.setAttribute('value', lang)
@@ -112,6 +112,16 @@ export const generateOCACredential = (
             el = document.createElement('div')
             el.innerText = structure.translations[language].description
             break
+          case 'category': {
+            const section = structure.sections.find(el => el.id == element.name)
+            el = document.createElement('div')
+            let level = (section.id.match(/-/g) || []).length
+            level = level > 6 ? 6 : level
+            const header = document.createElement(`h${level}`)
+            header.innerText = section.translations[language].label
+            el.appendChild(header)
+            break
+          }
           case 'attribute': {
             const attr = structure.controls.find(el => el.name == element.name)
             if (attr.type == 'Binary') {
