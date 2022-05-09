@@ -1,25 +1,41 @@
 import type { Structure } from 'oca.js-form-core'
+import type { Overlay, UnitOverlay } from 'oca.js'
+import { transformDataUnit } from './transformDataUnit'
 
 let document: Document
 
 if (typeof window === 'undefined') {
   /* eslint-disable */
   const { JSDOM } = require('jsdom')
+  /* eslint-enable */
   const dom = new JSDOM()
   document = dom.window.document
 } else {
   document = window.document
 }
 
-export const generateOCAForm = (
+export const generateOCAForm = async (
   structure: Structure,
-  data: { [key: string]: any },
+  data: { [key: string]: string | string[] },
   config: {
     showPii?: boolean
     defaultLanguage?: string
-    onSubmitHandler?: (capturedData: { [key: string]: any }) => void
+    onSubmitHandler?: (capturedData: {
+      [key: string]: string | string[]
+    }) => void
+    ocaRepoHostUrl?: string
+    additionalOverlays?: Overlay[]
   }
-): HTMLElement => {
+): Promise<HTMLElement> => {
+  const unitMappingOverlays = config.additionalOverlays.filter(o =>
+    o.type.includes(`/unit/`)
+  ) as UnitOverlay[]
+  data = await transformDataUnit(data, {
+    structure,
+    unitOverlays: unitMappingOverlays,
+    ocaRepoHostUrl: config.ocaRepoHostUrl
+  })
+
   const layout = structure.formLayout
   const availableLanguages = Object.keys(structure.translations)
   let defaultLanguage = availableLanguages[0]
@@ -43,7 +59,22 @@ export const generateOCAForm = (
     form.appendChild(layoutStyle)
   }
 
+  const elements: typeof layout.elements = []
   layout.elements.forEach(element => {
+    let cardinality = 1
+    if (element.type === 'attribute') {
+      const attr = structure.controls.find(el => el.name == element.name)
+      if (attr.cardinality) {
+        cardinality = Number(attr.cardinality)
+      }
+    }
+
+    for (let i = 0; i < cardinality; i++) {
+      elements.push(element)
+    }
+  })
+
+  elements.forEach(element => {
     let elementEl = document.createElement('div')
     switch (element.type) {
       case 'meta':
@@ -108,11 +139,20 @@ export const generateOCAForm = (
               break
             case 'input':
               if (attr.type === 'Select' || attr.type === 'SelectMultiple') {
-                partEl = generateControlInput(attr, data[attr.name])
+                partEl = generateControlInput(
+                  attr,
+                  data[attr.mapping || attr.name] as string
+                )
               } else {
+                let dataValue = data[attr.mapping || attr.name]
+                if (Array.isArray(dataValue)) {
+                  dataValue = (
+                    data[attr.mapping || attr.name] as string[]
+                  ).shift()
+                }
                 partEl = document.createElement('div')
                 partEl.style.cssText += 'display: flex; align-items: center;'
-                const inputEl = generateControlInput(attr, data[attr.name])
+                const inputEl = generateControlInput(attr, dataValue)
                 partEl.appendChild(inputEl)
                 if (attr.isPii) {
                   inputEl.style.cssText += 'display: inline-block;'
@@ -197,7 +237,8 @@ export const generateOCAForm = (
       }
       shadow.querySelectorAll('.pii-toggle').forEach(el => {
         const toggle = (el: Element) => {
-          const inputEl: any = el.parentElement.querySelector('._input')
+          const inputEl: HTMLInputElement =
+            el.parentElement.querySelector('._input')
           const control = structure.controls.find(c => c.name === inputEl.name)
           inputEl.type =
             inputEl.type === 'password'
@@ -209,21 +250,25 @@ export const generateOCAForm = (
         if (!config.showPii) {
           toggle(el)
         }
+        /* eslint-disable */
         // @ts-ignore
         el.onchange = e => {
           toggle(e.target)
         }
+        /* eslint-enable */
       })
       this.form = shadow.querySelector('form')
       this.form.oninput = e => {
+        /* eslint-disable */
         // @ts-ignore
         if (e.target.classList.contains('_input')) {
           // @ts-ignore
           this.controlInputChanged(e.target.getAttribute('name'))
         }
+        /* eslint-enable */
       }
 
-      this.form.onsubmit = _ => {
+      this.form.onsubmit = () => {
         if (config.onSubmitHandler) {
           const capturedData = this.captureFormData()
           this.hiddenControls.forEach(
@@ -246,10 +291,14 @@ export const generateOCAForm = (
 
     evaluateControlCondition(
       control: Structure['controls'][0],
-      capturedData: { [k: string]: string }
+      capturedData: {
+        [k: string]: string | string[]
+      } = {}
     ) {
       const varPlaceholders = control.condition.match(/\${\d+}/g) || []
-      const placeholersValue: { [placeholder: string]: string } = {}
+      const placeholersValue: {
+        [placeholder: string]: string | string[]
+      } = {}
       varPlaceholders.forEach(placeholder => {
         const index = parseInt(placeholder.match(/\d+/)[0])
         const dependencyName = control.dependencies[index]
@@ -275,33 +324,49 @@ export const generateOCAForm = (
       if (evaluateCondition(condition)) {
         this.hiddenControls.delete(control.name)
         controlDiv.style.display = null
+        Array.from(controlDiv.getElementsByClassName('_input')).forEach(el => {
+          if (control.conformance === 'M') {
+            el.setAttribute('required', '')
+          }
+        })
       } else {
         this.hiddenControls.add(control.name)
         controlDiv.style.display = 'none'
+        Array.from(controlDiv.getElementsByClassName('_input')).forEach(el => {
+          el.removeAttribute('required')
+        })
       }
     }
 
     captureFormData() {
-      const capturedData: { [k: string]: any } = {}
+      const capturedData: {
+        [k: string]: string | string[]
+      } = {}
       const formData = new FormData(this.form)
       this.structure.controls.forEach(c => {
         capturedData[c.name] = ''
         switch (c.type) {
           case 'SelectMultiple':
-            capturedData[c.name] = formData.getAll(c.name)
+            capturedData[c.name] = formData.getAll(c.name) as string[]
             break
-          case 'Binary':
+          case 'Binary': {
             const file = formData.get(c.name) as Blob
             if (file.size > 0) {
               const reader = new FileReader()
               reader.readAsDataURL(file)
               reader.onload = () => {
-                capturedData[c.name] = reader.result
+                capturedData[c.name] = reader.result as string
               }
             }
             break
+          }
           default:
-            capturedData[c.name] = formData.get(c.name) || ''
+            if (c.cardinality) {
+              capturedData[c.name] = (formData.getAll(c.name + '[]') ||
+                []) as string[]
+            } else {
+              capturedData[c.name] = (formData.get(c.name) || '') as string
+            }
             break
         }
       })
@@ -359,6 +424,9 @@ export const generateOCAForm = (
             switch (slot.getAttribute('part')) {
               case 'label': {
                 slot.textContent = control.translations[l].label
+                if (control.conformance === 'M') {
+                  slot.textContent += '*'
+                }
                 break
               }
               case 'information': {
@@ -371,15 +439,33 @@ export const generateOCAForm = (
           case 'entry': {
             const attrName = slot.getAttribute('attr-name')
             const control = s.controls.find(c => c.name === attrName)
+            const entryCodesMapping: { [_: string]: string } = {}
+            if (control.entryCodesMapping) {
+              control.entryCodesMapping.forEach(mapping => {
+                const splitted = mapping.split(':')
+                entryCodesMapping[splitted[1]] = splitted[0]
+              })
+            }
 
             const select = document.createElement('select')
             select.setAttribute('name', control.name)
-            const currentValues: string[] =
-              (fd.has(attrName) ? fd.getAll(attrName) : data[attrName]) || []
-            const currentValue =
-              (fd.has(attrName) ? fd.get(attrName) : data[attrName]) || ''
+            let currentValues = ((fd.has(attrName)
+              ? fd.getAll(attrName)
+              : data[control.mapping || attrName]) || []) as string[]
+            let currentValue = ((fd.has(attrName)
+              ? fd.get(attrName)
+              : data[control.mapping || attrName]) || '') as string
+
+            if (Array.isArray(currentValues)) {
+              currentValues = currentValues.map(v => entryCodesMapping[v] || v)
+            }
+            currentValue = entryCodesMapping[currentValue] || currentValue
+
             if (control.type === 'SelectMultiple') {
               select.setAttribute('multiple', '')
+            }
+            if (control.conformance === 'M') {
+              select.setAttribute('required', '')
             }
             control.entryCodes.forEach(code => {
               const opt = new Option(
@@ -489,8 +575,16 @@ const generateControlInput = (
   if (defaultInput) {
     input.setAttribute('value', defaultInput)
   }
-  input.id = control.name
-  input.setAttribute('name', control.name)
+  if (control.conformance === 'M') {
+    input.setAttribute('required', '')
+  }
+  if (control.cardinality) {
+    input.id = control.name + '[]'
+    input.setAttribute('name', control.name + '[]')
+  } else {
+    input.id = control.name
+    input.setAttribute('name', control.name)
+  }
   if (control.isPii) {
     input.classList.add('pii')
   }

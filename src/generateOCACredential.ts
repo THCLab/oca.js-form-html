@@ -1,16 +1,32 @@
 import type { Structure } from 'oca.js-form-core'
+import type { Overlay, UnitOverlay } from 'oca.js'
 import { gridCss } from 'grid'
+import { transformDataUnit } from './transformDataUnit'
 
-export const generateOCACredential = (
+export const generateOCACredential = async (
   structure: Structure,
-  data: { [key: string]: string },
-  config: { dataVaultUrl?: string }
-): HTMLElement => {
+  data: { [key: string]: string | string[] },
+  config: {
+    dataVaultUrl?: string
+    ocaRepoHostUrl?: string
+    additionalOverlays?: Overlay[]
+  }
+): Promise<HTMLElement> => {
+  const unitMappingOverlays = config.additionalOverlays.filter(o =>
+    o.type.includes(`/unit/`)
+  ) as UnitOverlay[]
+  data = await transformDataUnit(data, {
+    structure,
+    unitOverlays: unitMappingOverlays,
+    ocaRepoHostUrl: config.ocaRepoHostUrl
+  })
+
   const layout = structure.credentialLayout
   const iframe = document.createElement('iframe')
   iframe.id = 'credential'
   iframe.style.cssText = 'width: 100%; height: 100%; border: none;'
-  iframe.scrolling = (!layout.config?.css?.height || !layout.config?.css?.width) ? 'yes' : 'no'
+  iframe.scrolling =
+    !layout.config?.css?.height || !layout.config?.css?.width ? 'yes' : 'no'
   const iframeHead = document.createElement('head')
   if (layout.config && layout.config.css && layout.config.css.style) {
     const iframeStyle = document.createElement('style')
@@ -124,32 +140,63 @@ export const generateOCACredential = (
           }
           case 'attribute': {
             const attr = structure.controls.find(el => el.name == element.name)
+            const entryCodesMapping: { [_: string]: string } = {}
+            if (attr.entryCodesMapping) {
+              attr.entryCodesMapping.forEach(mapping => {
+                const splitted = mapping.split(':')
+                entryCodesMapping[splitted[1]] = splitted[0]
+              })
+            }
+
+            const attributeDatum = data[attr.mapping || attr.name]
             if (attr.type == 'Binary') {
               el = document.createElement('img')
-              if (data[element.name]) {
+              if (attributeDatum) {
                 const imageEl = el as HTMLImageElement
-                imageEl.src = data[element.name]
+                imageEl.src = attributeDatum as string
               }
             } else if (attr.type == 'Select') {
               el = document.createElement('div')
-              if (attr.translations[language].entries && data[element.name]) {
+              if (attr.translations[language].entries && attributeDatum) {
                 el.innerText =
-                  attr.translations[language].entries[data[element.name]]
+                  attr.translations[language].entries[
+                    entryCodesMapping[attributeDatum as string] ||
+                      (attributeDatum as string)
+                  ]
               }
             } else {
               el = document.createElement('div')
-              if (data[element.name]) {
-                el.innerText = data[element.name]
+              if (attributeDatum) {
+                if (
+                  Array.isArray(attributeDatum) &&
+                  attributeDatum.length > 0
+                ) {
+                  const s = document.createElement('select')
+                  s.style.cssText =
+                    'border: 0; background-color: rgba(0,0,0,0); margin: inherit; width: 100%;'
+                  ;(attributeDatum as string[]).forEach((dataValue: string) => {
+                    const op = document.createElement('option')
+                    op.value = entryCodesMapping[dataValue] || dataValue
+                    op.text = entryCodesMapping[dataValue] || dataValue
+                    s.appendChild(op)
+                  })
+                  el.appendChild(s)
+                } else {
+                  el.innerText = attributeDatum as string
+                }
               }
             }
             break
           }
-          case 'code':
+          case 'code': {
+            const attr = structure.controls.find(el => el.name == element.name)
+            const attributeDatum = data[attr.mapping || attr.name]
             el = document.createElement('div')
-            if (data[element.name]) {
-              el.innerText = data[element.name]
+            if (attributeDatum) {
+              el.innerText = attributeDatum as string
             }
             break
+          }
           case 'label': {
             const attr = structure.controls.find(el => el.name == element.name)
             el = document.createElement('div')

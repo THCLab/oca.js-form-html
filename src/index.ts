@@ -1,31 +1,38 @@
 import type { Structure } from 'oca.js-form-core'
+import type { Overlay } from 'oca.js'
 import { generateOCACredential } from 'generateOCACredential'
 import { generateOCAForm } from 'generateOCAForm'
 
-export const renderOCAForm = (
+export const renderOCAForm = async (
   structure: Structure,
   data = {},
   config: {
     showPii?: boolean
     defaultLanguage?: string
     onSubmitHandler?: (capturedData: { [key: string]: string }) => void
+    ocaRepoHostUrl?: string
+    additionalOverlays?: Overlay[]
   } = {}
-): string => {
-  return generateOCAForm(structure, data, config).outerHTML
+): Promise<string> => {
+  return (await generateOCAForm(structure, data, config)).outerHTML
 }
 
-export const renderOCACredential = (
+export const renderOCACredential = async (
   structure: Structure,
   data = {},
-  config: { dataVaultUrl?: string } = {}
-): {
+  config: {
+    dataVaultUrl?: string
+    ocaRepoHostUrl?: string
+    additionalOverlays?: Overlay[]
+  } = {}
+): Promise<{
   node: string
   config: { width: string; height: string }
   pageNumber: number
-} => {
+}> => {
   const layout = structure.credentialLayout
   return {
-    node: generateOCACredential(structure, data, config).outerHTML,
+    node: (await generateOCACredential(structure, data, config)).outerHTML,
     config: {
       width: layout.config.css.width,
       height: layout.config.css.height
