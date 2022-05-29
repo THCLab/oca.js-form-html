@@ -1,13 +1,12 @@
 import type { Structure } from 'oca.js-form-core'
 import type { Overlay, UnitOverlay } from 'oca.js'
+import type { Data, DataValue } from './types'
 import { transformDataUnit } from './transformDataUnit'
 
 let document: Document
 
 if (typeof window === 'undefined') {
-  /* eslint-disable */
-  const { JSDOM } = require('jsdom')
-  /* eslint-enable */
+  const { JSDOM } = require('jsdom') // eslint-disable-line
   const dom = new JSDOM()
   document = dom.window.document
 } else {
@@ -16,27 +15,28 @@ if (typeof window === 'undefined') {
 
 export const generateOCAForm = async (
   structure: Structure,
-  data: { [key: string]: string | string[] },
+  data: Data,
   config: {
     showPii?: boolean
     defaultLanguage?: string
-    onSubmitHandler?: (capturedData: {
-      [key: string]: string | string[]
-    }) => void
+    onSubmitHandler?: (capturedData: Data) => void
     ocaRepoHostUrl?: string
     additionalOverlays?: Overlay[]
+    formLayout?: Structure['formLayout']
   }
 ): Promise<HTMLElement> => {
-  const unitMappingOverlays = config.additionalOverlays.filter(o =>
-    o.type.includes(`/unit/`)
-  ) as UnitOverlay[]
+  const unitMappingOverlays = config.additionalOverlays
+    ? (config.additionalOverlays.filter(o =>
+        o.type.includes(`/unit/`)
+      ) as UnitOverlay[])
+    : []
   data = await transformDataUnit(data, {
     structure,
     unitOverlays: unitMappingOverlays,
     ocaRepoHostUrl: config.ocaRepoHostUrl
   })
 
-  const layout = structure.formLayout
+  const layout = config.formLayout || structure.formLayout
   const availableLanguages = Object.keys(structure.translations)
   let defaultLanguage = availableLanguages[0]
   if (config.defaultLanguage) {
@@ -73,136 +73,172 @@ export const generateOCAForm = async (
       elements.push(element)
     }
   })
+  ;(
+    await Promise.all(
+      elements.map(async element => {
+        let elementEl = document.createElement('div')
+        switch (element.type) {
+          case 'meta':
+            element.parts.forEach(part => {
+              let partEl: HTMLElement
 
-  elements.forEach(element => {
-    let elementEl = document.createElement('div')
-    switch (element.type) {
-      case 'meta':
-        element.parts.forEach(part => {
-          let partEl: HTMLElement
+              switch (part.name) {
+                case 'name':
+                  partEl = document.createElement('div')
+                  partEl.innerHTML = '<slot name="meta-name"></slot>'
+                  break
+                case 'description':
+                  partEl = document.createElement('div')
+                  partEl.innerHTML = '<slot name="meta-description"></slot>'
+                  break
+                case 'language': {
+                  partEl = document.createElement('select')
+                  partEl.id = 'languageSelect'
 
-          switch (part.name) {
-            case 'name':
-              partEl = document.createElement('div')
-              partEl.innerHTML = '<slot name="meta-name"></slot>'
-              break
-            case 'description':
-              partEl = document.createElement('div')
-              partEl.innerHTML = '<slot name="meta-description"></slot>'
-              break
-            case 'language': {
-              partEl = document.createElement('select')
-              partEl.id = 'languageSelect'
-
-              availableLanguages.forEach(lang => {
-                const option = document.createElement('option')
-                option.setAttribute('value', lang)
-                option.innerText = lang
-                if (lang === defaultLanguage) {
-                  option.setAttribute('selected', '')
-                }
-                partEl.appendChild(option)
-              })
-              break
-            }
-          }
-
-          if (part.config && part.config.css) {
-            if (part.config.css.style) {
-              partEl.style.cssText = part.config.css.style
-            }
-            if (part.config.css.classes) {
-              partEl.classList.add(...part.config.css.classes)
-            }
-          }
-          elementEl.appendChild(partEl)
-        })
-        break
-      case 'category': {
-        const cat = structure.sections.find(el => el.id == element.id)
-        elementEl = generateCategory(cat)
-        elementEl.classList.add('_category')
-        break
-      }
-      case 'attribute': {
-        const attr = structure.controls.find(el => el.name == element.name)
-        elementEl.classList.add('_control')
-
-        element.parts.forEach(part => {
-          let partEl: HTMLElement
-          switch (part.name) {
-            case 'label':
-              partEl = document.createElement('label')
-              partEl.classList.add('_label')
-              partEl.setAttribute('for', attr.name)
-              partEl.innerHTML = `<slot name="control" part="label" attr-name="${attr.name}"></slot>`
-              break
-            case 'input':
-              if (attr.type === 'Select' || attr.type === 'SelectMultiple') {
-                partEl = generateControlInput(
-                  attr,
-                  data[attr.mapping || attr.name] as string
-                )
-              } else {
-                let dataValue = data[attr.mapping || attr.name]
-                if (Array.isArray(dataValue)) {
-                  dataValue = (
-                    data[attr.mapping || attr.name] as string[]
-                  ).shift()
-                }
-                partEl = document.createElement('div')
-                partEl.style.cssText += 'display: flex; align-items: center;'
-                const inputEl = generateControlInput(attr, dataValue)
-                partEl.appendChild(inputEl)
-                if (attr.isPii) {
-                  inputEl.style.cssText += 'display: inline-block;'
-                  const showPiiEl = document.createElement('input')
-                  showPiiEl.type = 'checkbox'
-                  if (config.showPii) {
-                    showPiiEl.setAttribute('checked', '')
-                  }
-                  showPiiEl.style.cssText += 'display: inline-block;'
-                  showPiiEl.classList.add('pii-toggle')
-                  partEl.appendChild(showPiiEl)
+                  availableLanguages.forEach(lang => {
+                    const option = document.createElement('option')
+                    option.setAttribute('value', lang)
+                    option.innerText = lang
+                    if (lang === defaultLanguage) {
+                      option.setAttribute('selected', '')
+                    }
+                    partEl.appendChild(option)
+                  })
+                  break
                 }
               }
-              break
-            case 'information':
-              partEl = document.createElement('div')
-              partEl.classList.add('_information')
 
-              partEl.innerHTML = `<slot name="control" part="information" attr-name="${attr.name}"></slot>`
-              break
+              if (part.config && part.config.css) {
+                if (part.config.css.style) {
+                  partEl.style.cssText = part.config.css.style
+                }
+                if (part.config.css.classes) {
+                  partEl.classList.add(...part.config.css.classes)
+                }
+              }
+              elementEl.appendChild(partEl)
+            })
+            break
+          case 'category': {
+            const cat = structure.sections.find(el => el.id == element.id)
+            elementEl = generateCategory(cat)
+            elementEl.classList.add('_category')
+            break
           }
-          if (part.config && part.config.css) {
-            if (part.config.css.style) {
-              partEl.style.cssText = part.config.css.style
-            }
-            if (part.config.css.classes) {
-              partEl.classList.add(...part.config.css.classes)
-            }
+          case 'attribute': {
+            const attr = structure.controls.find(el => el.name == element.name)
+            elementEl.classList.add('_control')
+            ;(
+              await Promise.all(
+                element.parts.map(async part => {
+                  let partEl: HTMLElement
+                  switch (part.name) {
+                    case 'label':
+                      partEl = document.createElement('label')
+                      partEl.classList.add('_label')
+                      partEl.setAttribute('for', attr.name)
+                      partEl.innerHTML = `<slot name="control" part="label" attr-name="${attr.name}"></slot>`
+                      break
+                    case 'input':
+                      if (
+                        attr.type === 'Select' ||
+                        attr.type === 'SelectMultiple'
+                      ) {
+                        partEl = await generateControlInput(
+                          attr,
+                          data[attr.mapping || attr.name] as string,
+                          {
+                            showPii: config.showPii,
+                            defaultLanguage: config.defaultLanguage,
+                            ocaRepoHostUrl: config.ocaRepoHostUrl
+                          }
+                        )
+                      } else {
+                        let dataValue = data[attr.mapping || attr.name]
+                        if (Array.isArray(dataValue)) {
+                          dataValue = (
+                            data[attr.mapping || attr.name] as string[]
+                          ).shift()
+                        }
+                        partEl = document.createElement('div')
+                        partEl.style.cssText +=
+                          'display: flex; align-items: center;'
+
+                        const controlInputConfig: {
+                          showPii: boolean
+                          defaultLanguage: string
+                          ocaRepoHostUrl: string
+                          formLayout?: Structure['formLayout']
+                        } = {
+                          showPii: config.showPii,
+                          defaultLanguage: config.defaultLanguage,
+                          ocaRepoHostUrl: config.ocaRepoHostUrl
+                        }
+                        if (part.layout) {
+                          controlInputConfig['formLayout'] =
+                            structure.formLayout.reference_layouts[part.layout]
+                        }
+                        const inputEl = await generateControlInput(
+                          attr,
+                          dataValue,
+                          controlInputConfig
+                        )
+                        partEl.appendChild(inputEl)
+                        if (attr.isPii) {
+                          inputEl.style.cssText += 'display: inline-block;'
+                          const showPiiEl = document.createElement('input')
+                          showPiiEl.type = 'checkbox'
+                          if (config.showPii) {
+                            showPiiEl.setAttribute('checked', '')
+                          }
+                          showPiiEl.style.cssText += 'display: inline-block;'
+                          showPiiEl.classList.add('pii-toggle')
+                          partEl.appendChild(showPiiEl)
+                        }
+                      }
+                      break
+                    case 'information':
+                      partEl = document.createElement('div')
+                      partEl.classList.add('_information')
+
+                      partEl.innerHTML = `<slot name="control" part="information" attr-name="${attr.name}"></slot>`
+                      break
+                  }
+                  if (part.config && part.config.css) {
+                    if (part.config.css.style) {
+                      partEl.style.cssText = part.config.css.style
+                    }
+                    if (part.config.css.classes) {
+                      partEl.classList.add(...part.config.css.classes)
+                    }
+                  }
+                  return partEl
+                })
+              )
+            ).forEach(partEl => elementEl.appendChild(partEl))
+            break
           }
-          elementEl.appendChild(partEl)
-        })
-        break
-      }
-    }
-    if (element.config && element.config.css) {
-      if (element.config.css.style) {
-        elementEl.style.cssText = element.config.css.style
-      }
-      if (element.config.css.classes) {
-        elementEl.classList.add(...element.config.css.classes)
-      }
-    }
+        }
+        if (element.config && element.config.css) {
+          if (element.config.css.style) {
+            elementEl.style.cssText = element.config.css.style
+          }
+          if (element.config.css.classes) {
+            elementEl.classList.add(...element.config.css.classes)
+          }
+        }
 
-    form.appendChild(elementEl)
-  })
+        return elementEl
+      })
+    )
+  ).forEach(elementEl => form.appendChild(elementEl))
 
-  const submit = document.createElement('input')
-  submit.id = 'submit'
-  submit.type = 'submit'
-  form.appendChild(submit)
+  if (config.onSubmitHandler) {
+    const submit = document.createElement('input')
+    submit.id = 'submit'
+    submit.type = 'submit'
+    form.appendChild(submit)
+  }
 
   class OCAForm extends HTMLElement {
     structure: null | {
@@ -269,7 +305,7 @@ export const generateOCAForm = async (
       }
 
       this.form.onsubmit = () => {
-        if (config.onSubmitHandler) {
+        if (config.onSubmitHandler && this.validateForm()) {
           const capturedData = this.captureFormData()
           this.hiddenControls.forEach(
             controlName => delete capturedData[controlName]
@@ -278,6 +314,18 @@ export const generateOCAForm = async (
         }
         return false
       }
+    }
+
+    validateForm(form = this.form) {
+      const formsValidation = Array.from(
+        form.querySelectorAll('._reference')
+      ).map(refEl => {
+        const refForm = refEl?.shadowRoot?.querySelector('form')
+        if (refForm) {
+          return refForm.reportValidity()
+        }
+      })
+      return [form.reportValidity(), ...formsValidation].every(v => v)
     }
 
     controlInputChanged(controlName: string) {
@@ -291,14 +339,10 @@ export const generateOCAForm = async (
 
     evaluateControlCondition(
       control: Structure['controls'][0],
-      capturedData: {
-        [k: string]: string | string[]
-      } = {}
+      capturedData: Data = {}
     ) {
       const varPlaceholders = control.condition.match(/\${\d+}/g) || []
-      const placeholersValue: {
-        [placeholder: string]: string | string[]
-      } = {}
+      const placeholersValue: Data = {}
       varPlaceholders.forEach(placeholder => {
         const index = parseInt(placeholder.match(/\d+/)[0])
         const dependencyName = control.dependencies[index]
@@ -324,6 +368,20 @@ export const generateOCAForm = async (
       if (evaluateCondition(condition)) {
         this.hiddenControls.delete(control.name)
         controlDiv.style.display = null
+
+        if (control.reference) {
+          const refEl = this.form.querySelector(
+            `._reference#${control.name}`
+          ).shadowRoot
+          control.reference.controls.forEach(nestedControl => {
+            if (nestedControl.conformance === 'M') {
+              refEl
+                .querySelector(`#${nestedControl.name}`)
+                .setAttribute('required', '')
+            }
+          })
+        }
+
         Array.from(controlDiv.getElementsByClassName('_input')).forEach(el => {
           if (control.conformance === 'M') {
             el.setAttribute('required', '')
@@ -331,6 +389,18 @@ export const generateOCAForm = async (
         })
       } else {
         this.hiddenControls.add(control.name)
+
+        if (control.reference) {
+          const refEl = this.form.querySelector(
+            `._reference#${control.name}`
+          ).shadowRoot
+          control.reference.controls.forEach(nestedControl => {
+            refEl
+              .querySelector(`#${nestedControl.name}`)
+              .removeAttribute('required')
+          })
+        }
+
         controlDiv.style.display = 'none'
         Array.from(controlDiv.getElementsByClassName('_input')).forEach(el => {
           el.removeAttribute('required')
@@ -338,17 +408,40 @@ export const generateOCAForm = async (
       }
     }
 
-    captureFormData() {
-      const capturedData: {
-        [k: string]: string | string[]
-      } = {}
-      const formData = new FormData(this.form)
-      this.structure.controls.forEach(c => {
-        capturedData[c.name] = ''
+    captureFormData(form = this.form, structure = this.structure) {
+      const capturedData: Data = {}
+      const formData = new FormData(form)
+      structure.controls.forEach(c => {
         switch (c.type) {
-          case 'SelectMultiple':
+          case 'SelectMultiple': {
             capturedData[c.name] = formData.getAll(c.name) as string[]
             break
+          }
+          case 'Reference': {
+            if (c.cardinality) {
+              const refOCAForms = form.querySelectorAll(`#${c.name}\\[\\]`)
+              capturedData[c.name] = []
+              refOCAForms.forEach(refOCAForm => {
+                const refForm = refOCAForm?.shadowRoot?.querySelector('form')
+                if (refForm) {
+                  ;(capturedData[c.name] as Data[]).push(
+                    this.captureFormData(refForm, c.reference)
+                  )
+                }
+              })
+            } else {
+              const refForm = form
+                .querySelector(`#${c.name}`)
+                ?.shadowRoot?.querySelector('form')
+              if (refForm) {
+                capturedData[c.name] = this.captureFormData(
+                  refForm,
+                  c.reference
+                )
+              }
+            }
+            break
+          }
           case 'Binary': {
             const file = formData.get(c.name) as Blob
             if (file.size > 0) {
@@ -369,6 +462,8 @@ export const generateOCAForm = async (
             }
             break
         }
+
+        capturedData[c.name] = capturedData[c.name] || ''
       })
 
       return capturedData
@@ -532,10 +627,15 @@ const generateCategory = (
   return category
 }
 
-const generateControlInput = (
+const generateControlInput = async (
   control: Structure['controls'][0],
-  defaultInput: string
-): HTMLElement => {
+  defaultInput: DataValue,
+  config: {
+    showPii?: boolean
+    defaultLanguage?: string
+    ocaRepoHostUrl?: string
+  }
+): Promise<HTMLElement> => {
   let input: HTMLElement = document.createElement('input')
   switch (control.type) {
     case 'Text':
@@ -568,12 +668,17 @@ const generateControlInput = (
       }
       break
     case 'Reference':
-      // input = generateOCAForm(control.reference, layout)
+      input = await generateOCAForm(
+        control.reference,
+        (defaultInput as Data) || {},
+        config
+      )
+      input.classList.add('_reference')
       break
   }
 
   if (defaultInput) {
-    input.setAttribute('value', defaultInput)
+    input.setAttribute('value', defaultInput as string)
   }
   if (control.conformance === 'M') {
     input.setAttribute('required', '')

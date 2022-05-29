@@ -31,11 +31,33 @@ export const renderOCACredential = async (
   pageNumber: number
 }> => {
   const layout = structure.credentialLayout
+  const height = [
+    { layout: structure.credentialLayout, cardinality: 1 },
+    ...structure.controls
+      .filter(c => c.type === 'Reference')
+      .map(c => ({
+        layout: layout.reference_layouts[c.reference.captureBaseSAI],
+        cardinality: Number(c.cardinality) || 1
+      }))
+  ]
+    .map(({ layout, cardinality }) => {
+      return {
+        height: parseInt(layout.config.css.height, 10),
+        pageNumber: layout.pages.length,
+        cardinality
+      }
+    })
+    .reduce(
+      (result, item) =>
+        result + (item.height / item.pageNumber) * item.cardinality,
+      0
+    )
+
   return {
     node: (await generateOCACredential(structure, data, config)).outerHTML,
     config: {
       width: layout.config.css.width,
-      height: layout.config.css.height
+      height: height + 'px'
     },
     pageNumber: layout.pages.length
   }

@@ -1,14 +1,15 @@
 import type { Structure } from 'oca.js-form-core'
 import type { UnitOverlay } from 'oca.js'
+import type { Data } from './types'
 
 export const transformDataUnit = async (
-  data: { [key: string]: string | string[] },
+  data: Data,
   config: {
     structure: Structure
     ocaRepoHostUrl: string
     unitOverlays: UnitOverlay[]
   }
-): Promise<{ [key: string]: string | string[] }> => {
+): Promise<Data> => {
   const attrTransformations: {
     [attrName: string]: { source: string; target: string }
   } = {}
