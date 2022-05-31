@@ -7,7 +7,7 @@ export const renderOCAForm = async (
   structure: Structure,
   data = {},
   config: {
-    showPii?: boolean
+    showFlagged?: boolean
     defaultLanguage?: string
     onSubmitHandler?: (capturedData: { [key: string]: string }) => void
     ocaRepoHostUrl?: string

@@ -1,6 +1,6 @@
 {
   "name": "oca.js-form-html",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "files": [
     "build/*",
     "dist/*"
@@ -46,6 +46,6 @@
   "dependencies": {
     "@types/jsdom": "^16.2.14",
     "jsdom": "^19.0.0",
-    "oca.js-form-core": "^0.0.22"
+    "oca.js-form-core": "^0.0.23"
   }
 }

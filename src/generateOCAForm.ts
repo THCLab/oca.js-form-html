@@ -17,7 +17,7 @@ export const generateOCAForm = async (
   structure: Structure,
   data: Data,
   config: {
-    showPii?: boolean
+    showFlagged?: boolean
     defaultLanguage?: string
     onSubmitHandler?: (capturedData: Data) => void
     ocaRepoHostUrl?: string
@@ -148,7 +148,7 @@ export const generateOCAForm = async (
                           attr,
                           data[attr.mapping || attr.name] as string,
                           {
-                            showPii: config.showPii,
+                            showFlagged: config.showFlagged,
                             defaultLanguage: config.defaultLanguage,
                             ocaRepoHostUrl: config.ocaRepoHostUrl
                           }
@@ -165,12 +165,12 @@ export const generateOCAForm = async (
                           'display: flex; align-items: center;'
 
                         const controlInputConfig: {
-                          showPii: boolean
+                          showFlagged: boolean
                           defaultLanguage: string
                           ocaRepoHostUrl: string
                           formLayout?: Structure['formLayout']
                         } = {
-                          showPii: config.showPii,
+                          showFlagged: config.showFlagged,
                           defaultLanguage: config.defaultLanguage,
                           ocaRepoHostUrl: config.ocaRepoHostUrl
                         }
@@ -184,16 +184,17 @@ export const generateOCAForm = async (
                           controlInputConfig
                         )
                         partEl.appendChild(inputEl)
-                        if (attr.isPii) {
+                        if (attr.isFlagged) {
                           inputEl.style.cssText += 'display: inline-block;'
-                          const showPiiEl = document.createElement('input')
-                          showPiiEl.type = 'checkbox'
-                          if (config.showPii) {
-                            showPiiEl.setAttribute('checked', '')
+                          const showFlaggedEl = document.createElement('input')
+                          showFlaggedEl.type = 'checkbox'
+                          if (config.showFlagged) {
+                            showFlaggedEl.setAttribute('checked', '')
                           }
-                          showPiiEl.style.cssText += 'display: inline-block;'
-                          showPiiEl.classList.add('pii-toggle')
-                          partEl.appendChild(showPiiEl)
+                          showFlaggedEl.style.cssText +=
+                            'display: inline-block;'
+                          showFlaggedEl.classList.add('flagged-toggle')
+                          partEl.appendChild(showFlaggedEl)
                         }
                       }
                       break
@@ -271,7 +272,7 @@ export const generateOCAForm = async (
         languageSelect.onchange = () =>
           this.setAttribute('language', languageSelect.value)
       }
-      shadow.querySelectorAll('.pii-toggle').forEach(el => {
+      shadow.querySelectorAll('.flagged-toggle').forEach(el => {
         const toggle = (el: Element) => {
           const inputEl: HTMLInputElement =
             el.parentElement.querySelector('._input')
@@ -283,7 +284,7 @@ export const generateOCAForm = async (
                 : control.type
               : 'password'
         }
-        if (!config.showPii) {
+        if (!config.showFlagged) {
           toggle(el)
         }
         /* eslint-disable */
@@ -582,8 +583,8 @@ export const generateOCAForm = async (
             }
 
             select.classList.add('_input')
-            if (control.isPii) {
-              select.classList.add('pii')
+            if (control.isFlagged) {
+              select.classList.add('flagged')
             }
 
             slot.innerHTML = ''
@@ -631,7 +632,7 @@ const generateControlInput = async (
   control: Structure['controls'][0],
   defaultInput: DataValue,
   config: {
-    showPii?: boolean
+    showFlagged?: boolean
     defaultLanguage?: string
     ocaRepoHostUrl?: string
   }
@@ -690,8 +691,8 @@ const generateControlInput = async (
     input.id = control.name
     input.setAttribute('name', control.name)
   }
-  if (control.isPii) {
-    input.classList.add('pii')
+  if (control.isFlagged) {
+    input.classList.add('flagged')
   }
 
   return input
