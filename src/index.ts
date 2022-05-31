@@ -21,6 +21,7 @@ export const renderOCACredential = async (
   structure: Structure,
   data = {},
   config: {
+    defaultLanguage?: string
     dataVaultUrl?: string
     ocaRepoHostUrl?: string
     additionalOverlays?: Overlay[]

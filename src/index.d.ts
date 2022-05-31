@@ -16,6 +16,7 @@ declare module 'oca.js-form-html' {
     structure: Structure,
     data: { [key: string]: string },
     config: {
+      defaultLanguage?: string
       dataVaultUrl?: string
       ocaRepoHostUrl?: string
       additionalOverlays?: Overlay[]
