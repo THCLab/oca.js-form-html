@@ -112,7 +112,7 @@ export const generateOCACredential = async (
                     'SAI:',
                     ''
                   )
-                  pageDiv.style.cssText += `background-image: url("${config.dataVaultUrl}/${imageSAI}");`
+                  pageDiv.style.cssText += `background-image: url("${config.dataVaultUrl}/api/v1/files/${imageSAI}");`
                 }
               }
               if (i != 0) {
