@@ -15,7 +15,7 @@ export const transformDataUnit = async (
   } = {}
   for (let i = 0; i < config.unitOverlays.length; i++) {
     const o = config.unitOverlays[i]
-    const entries = Object.entries(o.attr_units)
+    const entries = Object.entries(o.attribute_units)
     for (let j = 0; j < entries.length; j++) {
       const [attrName, unit] = entries[j]
       const control = config.structure.controls.find(c => c.name == attrName)

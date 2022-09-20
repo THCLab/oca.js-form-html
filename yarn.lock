@@ -3038,24 +3038,17 @@ nwsapi@^2.2.0:
   resolved "https://registry.npmjs.org/nwsapi/-/nwsapi-2.2.0.tgz"
   integrity sha512-h2AatdwYH+JHiZpv7pt/gSX1XoRGb7L/qSIeuqA6GwYoF9w1vP1cw42TO0aI2pNyshRK5893hNSl+1//vHK7hQ==
 
-oca.js-form-core@^0.0.24:
-  version "0.0.24"
-  resolved "https://registry.yarnpkg.com/oca.js-form-core/-/oca.js-form-core-0.0.24.tgz#759d068ada99dcdf6c5e600b8d0317ca0ccd2e81"
-  integrity sha512-/GtM9a5z02ZI+37x6W7VOD+UAK61/XWJNJno+sL7qIoGZbYZQ9o1CLBbzY+bYJboimiMYxvPvqrSJYolD91LzA==
+"oca.js-form-core@file:.yalc/oca.js-form-core":
+  version "0.0.26-0c4b9de2"
   dependencies:
     axios "^0.24.0"
     jszip "^3.7.1"
-    oca.js "0.1.38"
+    oca.js "0.2.1"
 
-oca.js@0.1.38:
-  version "0.1.38"
-  resolved "https://registry.yarnpkg.com/oca.js/-/oca.js-0.1.38.tgz#1712ff9b596afec663a3b1d7deb8efa743673b97"
-  integrity sha512-BPAzHi2XKmxT9SjPFt+BfSCAboGEuaUpXgiZmUOaSaksJUDbH8rgIqGmFIziNvESQOQlx2M5gZdFE4Lb6BkStg==
-
-oca.js@^0.1.37:
-  version "0.1.37"
-  resolved "https://registry.yarnpkg.com/oca.js/-/oca.js-0.1.37.tgz#4c28c54b636884e9c01757db35daa974f5add4c0"
-  integrity sha512-vb0pZ6N1KOprmR6w+8rE4IhVAebuShfcCTTSYaySLVT5XxesdCoTdoGLQtgdUXGgI2LAiVm/VP6QB6D1cQu1wA==
+oca.js@0.2.1, oca.js@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/oca.js/-/oca.js-0.2.1.tgz#dd900d7078b36f6eb29944c1a685cf9806fc74d5"
+  integrity sha512-Y6ZBWCO4sijfLivd+V5RutOJvHydgjEAesClr62GhOc2SO1hTxmgXq8mI4lYAP7OBvTRui9HZJXIqmFILpUzDg==
 
 once@^1.3.0:
   version "1.4.0"

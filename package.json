@@ -1,6 +1,6 @@
 {
   "name": "oca.js-form-html",
-  "version": "0.0.18",
+  "version": "0.1.0",
   "files": [
     "build/*",
     "dist/*"
@@ -32,7 +32,7 @@
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
     "jest": "^27.2.4",
-    "oca.js": "^0.1.37",
+    "oca.js": "^0.2.1",
     "prettier": "^2.4.1",
     "ts-jest": "^27.0.5",
     "ts-loader": "^9.2.6",
@@ -46,6 +46,6 @@
   "dependencies": {
     "@types/jsdom": "^16.2.14",
     "jsdom": "^19.0.0",
-    "oca.js-form-core": "^0.0.24"
+    "oca.js-form-core": "^0.1.0"
   }
 }
