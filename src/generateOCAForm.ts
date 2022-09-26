@@ -13,6 +13,13 @@ if (typeof window === 'undefined') {
   document = window.document
 }
 
+type LayoutElement = Structure['formLayout']['elements'][0]
+type CardinalityManagerElement = {
+  type: 'cardinalityManager'
+  cardinalityRange: { min: number; max: number }
+  element: LayoutElement
+}
+
 export const generateOCAForm = async (
   structure: Structure,
   data: Data,
@@ -59,18 +66,35 @@ export const generateOCAForm = async (
     form.appendChild(layoutStyle)
   }
 
-  const elements: typeof layout.elements = []
+  const elements: (LayoutElement | CardinalityManagerElement)[] = []
   layout.elements.forEach(element => {
-    let cardinality = 1
+    const cardinalityRange = { min: 1, max: 1 }
+    let isCardinalityManagable = false
     if (element.type === 'attribute') {
       const attr = structure.controls.find(el => el.name == element.name)
       if (attr.cardinality) {
-        cardinality = Number(attr.cardinality)
+        const cardinality = Number(attr.cardinality)
+        cardinalityRange.min = cardinalityRange.max = cardinality
+        if (Number.isNaN(cardinality) || cardinality < 0) {
+          const range = attr.cardinality.split('-')
+          cardinalityRange.min = Number(range[0]) || 1
+          cardinalityRange.max = Number(range[1])
+          isCardinalityManagable =
+            cardinalityRange.max == 0 ||
+            cardinalityRange.min < cardinalityRange.max
+        }
       }
     }
 
-    for (let i = 0; i < cardinality; i++) {
+    for (let i = 0; i < cardinalityRange.min; i++) {
       elements.push(element)
+    }
+    if (isCardinalityManagable) {
+      elements.push({
+        type: 'cardinalityManager',
+        cardinalityRange,
+        element
+      })
     }
   })
   ;(
@@ -126,106 +150,49 @@ export const generateOCAForm = async (
             break
           }
           case 'attribute': {
-            const attr = structure.controls.find(el => el.name == element.name)
             elementEl.classList.add('_control')
-            ;(
-              await Promise.all(
-                element.parts.map(async part => {
-                  let partEl: HTMLElement
-                  switch (part.name) {
-                    case 'label':
-                      partEl = document.createElement('label')
-                      partEl.classList.add('_label')
-                      partEl.setAttribute('for', attr.name)
-                      partEl.innerHTML = `<slot name="control" part="label" attr-name="${attr.name}"></slot>`
-                      break
-                    case 'input':
-                      if (
-                        attr.type === 'Select' ||
-                        attr.type === 'SelectMultiple'
-                      ) {
-                        partEl = await generateControlInput(
-                          attr,
-                          data[attr.mapping || attr.name] as string,
-                          {
-                            showFlagged: config.showFlagged,
-                            defaultLanguage: config.defaultLanguage,
-                            ocaRepoHostUrl: config.ocaRepoHostUrl
-                          }
-                        )
-                      } else {
-                        let dataValue = data[attr.mapping || attr.name]
-                        if (Array.isArray(dataValue)) {
-                          dataValue = (
-                            data[attr.mapping || attr.name] as string[]
-                          ).shift()
-                        }
-                        partEl = document.createElement('div')
-                        partEl.style.cssText +=
-                          'display: flex; align-items: center;'
-
-                        const controlInputConfig: {
-                          showFlagged: boolean
-                          defaultLanguage: string
-                          ocaRepoHostUrl: string
-                          formLayout?: Structure['formLayout']
-                        } = {
-                          showFlagged: config.showFlagged,
-                          defaultLanguage: config.defaultLanguage,
-                          ocaRepoHostUrl: config.ocaRepoHostUrl
-                        }
-                        if (part.layout) {
-                          controlInputConfig['formLayout'] =
-                            structure.formLayout.reference_layouts[part.layout]
-                        }
-                        const inputEl = await generateControlInput(
-                          attr,
-                          dataValue,
-                          controlInputConfig
-                        )
-                        partEl.appendChild(inputEl)
-                        if (attr.isFlagged) {
-                          inputEl.style.cssText += 'display: inline-block;'
-                          const showFlaggedEl = document.createElement('input')
-                          showFlaggedEl.type = 'checkbox'
-                          if (config.showFlagged) {
-                            showFlaggedEl.setAttribute('checked', '')
-                          }
-                          showFlaggedEl.style.cssText +=
-                            'display: inline-block;'
-                          showFlaggedEl.classList.add('flagged-toggle')
-                          partEl.appendChild(showFlaggedEl)
-                        }
-                      }
-                      break
-                    case 'information':
-                      partEl = document.createElement('div')
-                      partEl.classList.add('_information')
-
-                      partEl.innerHTML = `<slot name="control" part="information" attr-name="${attr.name}"></slot>`
-                      break
-                  }
-                  if (part.config && part.config.css) {
-                    if (part.config.css.style) {
-                      partEl.style.cssText = part.config.css.style
-                    }
-                    if (part.config.css.classes) {
-                      partEl.classList.add(...part.config.css.classes)
-                    }
-                  }
-                  return partEl
-                })
-              )
-            ).forEach(partEl => elementEl.appendChild(partEl))
+            const control = structure.controls.find(
+              el => el.name == element.name
+            )
+            generateAttribute(control, config, data, element).then(parts => {
+              parts.forEach(partEl => elementEl.appendChild(partEl))
+            })
+            break
+          }
+          case 'cardinalityManager': {
+            const managerElement = element as CardinalityManagerElement
+            elementEl.classList.add(
+              `_cardinality-manager[${managerElement.element.name}]`
+            )
+            elementEl.setAttribute(
+              'range',
+              JSON.stringify(managerElement.cardinalityRange)
+            )
+            const addBtn = document.createElement('button')
+            addBtn.type = 'button'
+            addBtn.setAttribute('t', 'add')
+            addBtn.setAttribute('attribute-name', managerElement.element.name)
+            const control = structure.controls.find(
+              el => el.name == managerElement.element.name
+            )
+            addBtn.setAttribute('control', JSON.stringify(control))
+            addBtn.setAttribute(
+              'element',
+              JSON.stringify(managerElement.element)
+            )
+            addBtn.setAttribute('config', JSON.stringify(config))
+            addBtn.innerText = '+'
+            elementEl.appendChild(addBtn)
             break
           }
         }
-        if (element.config && element.config.css) {
-          if (element.config.css.style) {
-            elementEl.style.cssText = element.config.css.style
+        const layoutElement = element as LayoutElement
+        if (layoutElement.config && layoutElement.config.css) {
+          if (layoutElement.config.css.style) {
+            elementEl.style.cssText = layoutElement.config.css.style
           }
-          if (element.config.css.classes) {
-            elementEl.classList.add(...element.config.css.classes)
+          if (layoutElement.config.css.classes) {
+            elementEl.classList.add(...layoutElement.config.css.classes)
           }
         }
 
@@ -272,28 +239,9 @@ export const generateOCAForm = async (
         languageSelect.onchange = () =>
           this.setAttribute('language', languageSelect.value)
       }
-      shadow.querySelectorAll('.flagged-toggle').forEach(el => {
-        const toggle = (el: Element) => {
-          const inputEl: HTMLInputElement =
-            el.parentElement.querySelector('._input')
-          const control = structure.controls.find(c => c.name === inputEl.name)
-          inputEl.type =
-            inputEl.type === 'password'
-              ? control.type === 'Binary'
-                ? 'file'
-                : control.type
-              : 'password'
-        }
-        if (!config.showFlagged) {
-          toggle(el)
-        }
-        /* eslint-disable */
-        // @ts-ignore
-        el.onchange = e => {
-          toggle(e.target)
-        }
-        /* eslint-enable */
-      })
+      shadow
+        .querySelectorAll('.flagged-toggle')
+        .forEach(this.flaggedToggleHandler.bind(this, config.showFlagged))
       this.form = shadow.querySelector('form')
       this.form.oninput = e => {
         /* eslint-disable */
@@ -315,6 +263,115 @@ export const generateOCAForm = async (
         }
         return false
       }
+
+      this.form
+        .querySelectorAll('button')
+        .forEach(this.cardinalityManagerBtnClicked.bind(this))
+    }
+
+    flaggedToggleHandler(showFlagged, el) {
+      const toggle = (el: Element) => {
+        const inputEl: HTMLInputElement =
+          el.parentElement.querySelector('._input')
+        const control = structure.controls.find(
+          c => c.name === inputEl.name || c.name + '[]' === inputEl.name
+        )
+        inputEl.type =
+          inputEl.type === 'password'
+            ? control.type === 'Binary'
+              ? 'file'
+              : control.type
+            : 'password'
+      }
+      if (!showFlagged) {
+        toggle(el)
+      }
+      /* eslint-disable */
+      // @ts-ignore
+      el.onchange = e => {
+        toggle(e.target)
+      }
+      /* eslint-enable */
+    }
+
+    cardinalityManagerBtnClicked(el) {
+      el.addEventListener('click', () => {
+        const cardinalityManagerEl = this.form.querySelector(
+          `._cardinality-manager\\[${el.getAttribute('attribute-name')}\\]`
+        )
+        const range = JSON.parse(cardinalityManagerEl.getAttribute('range'))
+        switch (el.getAttribute('t')) {
+          case 'add': {
+            const config = JSON.parse(el.getAttribute('config'))
+            generateAttribute(
+              JSON.parse(el.getAttribute('control')),
+              config,
+              {},
+              JSON.parse(el.getAttribute('element'))
+            ).then(parts => {
+              const randomId = Math.random().toString(16).substring(2)
+              const attrEl = document.createElement('div')
+              attrEl.setAttribute('control-id', randomId)
+              attrEl.classList.add('_control')
+              const removeBtn = document.createElement('button')
+              removeBtn.type = 'button'
+              removeBtn.setAttribute('t', 'remove')
+              removeBtn.setAttribute(
+                'attribute-name',
+                el.getAttribute('attribute-name')
+              )
+              removeBtn.setAttribute('control-id', randomId)
+              removeBtn.innerText = '-'
+              this.cardinalityManagerBtnClicked(removeBtn)
+              attrEl.appendChild(removeBtn)
+              parts.forEach(partEl => attrEl.appendChild(partEl))
+              cardinalityManagerEl.insertBefore(attrEl, el)
+
+              attrEl
+                .querySelectorAll('.flagged-toggle')
+                .forEach(
+                  this.flaggedToggleHandler.bind(this, config.showFlagged)
+                )
+              this.updateLang()
+
+              if (
+                range.max > 0 &&
+                Array.from(cardinalityManagerEl.querySelectorAll('._control'))
+                  .length >=
+                  range.max - range.min
+              ) {
+                ;(
+                  cardinalityManagerEl.querySelector(
+                    `button[t="add"]`
+                  ) as HTMLElement
+                ).style.display = 'none'
+              }
+            })
+            break
+          }
+          case 'remove': {
+            cardinalityManagerEl
+              .querySelector(
+                `._control[control-id="${el.getAttribute('control-id')}"]`
+              )
+              .remove()
+
+            if (
+              range.max > 0 &&
+              Array.from(cardinalityManagerEl.querySelectorAll('._control'))
+                .length <
+                range.max - range.min
+            ) {
+              ;(
+                cardinalityManagerEl.querySelector(
+                  `button[t="add"]`
+                ) as HTMLElement
+              ).style.display = 'block'
+            }
+            break
+          }
+        }
+      })
     }
 
     validateForm(form = this.form) {
@@ -611,6 +668,95 @@ export const generateOCAForm = async (
   ocaForm.setAttribute('language', defaultLanguage)
 
   return ocaForm
+}
+
+const generateAttribute = (
+  control: Structure['controls'][0],
+  config,
+  data,
+  element: Structure['formLayout']['elements'][0]
+): Promise<HTMLElement[]> => {
+  const attr = control // structure.controls.find(el => el.name == element.name)
+  return Promise.all(
+    element.parts.map(async part => {
+      let partEl: HTMLElement
+      switch (part.name) {
+        case 'label':
+          partEl = document.createElement('label')
+          partEl.classList.add('_label')
+          partEl.setAttribute('for', attr.name)
+          partEl.innerHTML = `<slot name="control" part="label" attr-name="${attr.name}"></slot>`
+          break
+        case 'input':
+          if (attr.type === 'Select' || attr.type === 'SelectMultiple') {
+            partEl = await generateControlInput(
+              attr,
+              data[attr.mapping || attr.name] as string,
+              {
+                showFlagged: config.showFlagged,
+                defaultLanguage: config.defaultLanguage,
+                ocaRepoHostUrl: config.ocaRepoHostUrl
+              }
+            )
+          } else {
+            let dataValue = data[attr.mapping || attr.name]
+            if (Array.isArray(dataValue)) {
+              dataValue = (data[attr.mapping || attr.name] as string[]).shift()
+            }
+            partEl = document.createElement('div')
+            partEl.style.cssText += 'display: flex; align-items: center;'
+
+            const controlInputConfig: {
+              showFlagged: boolean
+              defaultLanguage: string
+              ocaRepoHostUrl: string
+              formLayout?: Structure['formLayout']
+            } = {
+              showFlagged: config.showFlagged,
+              defaultLanguage: config.defaultLanguage,
+              ocaRepoHostUrl: config.ocaRepoHostUrl
+            }
+            if (part.layout) {
+              // controlInputConfig['formLayout'] =
+              //   structure.formLayout.reference_layouts[part.layout]
+            }
+            const inputEl = await generateControlInput(
+              attr,
+              dataValue,
+              controlInputConfig
+            )
+            partEl.appendChild(inputEl)
+            if (attr.isFlagged) {
+              inputEl.style.cssText += 'display: inline-block;'
+              const showFlaggedEl = document.createElement('input')
+              showFlaggedEl.type = 'checkbox'
+              if (config.showFlagged) {
+                showFlaggedEl.setAttribute('checked', '')
+              }
+              showFlaggedEl.style.cssText += 'display: inline-block;'
+              showFlaggedEl.classList.add('flagged-toggle')
+              partEl.appendChild(showFlaggedEl)
+            }
+          }
+          break
+        case 'information':
+          partEl = document.createElement('div')
+          partEl.classList.add('_information')
+
+          partEl.innerHTML = `<slot name="control" part="information" attr-name="${attr.name}"></slot>`
+          break
+      }
+      if (part.config && part.config.css) {
+        if (part.config.css.style) {
+          partEl.style.cssText = part.config.css.style
+        }
+        if (part.config.css.classes) {
+          partEl.classList.add(...part.config.css.classes)
+        }
+      }
+      return partEl
+    })
+  )
 }
 
 const generateCategory = (
