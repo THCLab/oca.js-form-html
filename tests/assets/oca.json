@@ -1,0 +1,118 @@
+{
+  "capture_base": {
+    "type": "spec/capture_base/1.0",
+    "classification": "",
+    "attributes": {
+      "name": "Text"
+    },
+    "flagged_attributes": ["name"]
+  },
+  "overlays": [
+    {
+      "capture_base": "EENR0D_y1bFMs8gUF9SW1YbgvcyL3G8VdL7tYYq0p5PM",
+      "type": "spec/overlays/character_encoding/1.0",
+      "default_character_encoding": "utf-8",
+      "attribute_character_encoding": {}
+    },
+    {
+      "capture_base": "EENR0D_y1bFMs8gUF9SW1YbgvcyL3G8VdL7tYYq0p5PM",
+      "type": "spec/overlays/cardinality/1.0",
+      "attribute_cardinality": {
+        "name": "1-3"
+      }
+    },
+    {
+      "capture_base": "EENR0D_y1bFMs8gUF9SW1YbgvcyL3G8VdL7tYYq0p5PM",
+      "type": "spec/overlays/label/1.0",
+      "language": "en_EN",
+      "attribute_labels": {
+        "name": "Name:"
+      },
+      "attribute_categories": ["_cat-1_"],
+      "category_labels": {
+        "_cat-1_": "Category 1"
+      }
+    },
+    {
+      "capture_base": "EENR0D_y1bFMs8gUF9SW1YbgvcyL3G8VdL7tYYq0p5PM",
+      "type": "spec/overlays/information/1.0",
+      "language": "en_EN",
+      "attribute_information": {
+        "name": "Provide your name"
+      }
+    },
+    {
+      "capture_base": "EENR0D_y1bFMs8gUF9SW1YbgvcyL3G8VdL7tYYq0p5PM",
+      "type": "spec/overlays/meta/1.0",
+      "language": "en_EN",
+      "name": "Driving Licence",
+      "description": "OCA for driving licence"
+    },
+    {
+      "capture_base": "EENR0D_y1bFMs8gUF9SW1YbgvcyL3G8VdL7tYYq0p5PM",
+      "type": "spec/overlays/form_layout/1.0",
+      "layout": {
+        "config": {
+          "css": {
+            "style": "form {\n  background-color: white;\n  font-family: 'Lato', 'sans-serif';\n  color: #575756;\n  padding: 20px;\n  border: 1px solid rgba(0, 0, 0, .1);\n  border-radius: 5px;\n  box-shadow: 0 5px 8px 0 rgb(0 0 0 / 10%), 0 3px 10px 0 rgb(0 0 0 / 10%);\n} ._category h1, h2, h3, h4, h5, h6 {\n  font-size: 14px;\n  font-weight: 500;\n  line-height: 1.15em;\n  margin: 0.3em 0;\n} ._category h1 { font-size: 22px; } ._category h2 { font-size: 18px; } ._category {\n  border: 0;\n  border-bottom: 2px dashed #0000004d;\n  margin: 10px 0 20px 0;\n}\n._control {\n  margin: 5px 0;\n} ._label {\n  display: block;\n} ._input {\n  padding: 0 0.5em;\n}\n._input[multiple] {\n  height: 6.5em;\n  display: grid;\n  align-items: center;\n}\n._reference {\n  width: 100%;\n  height: 100%;\n}\n._input, .language {\n  margin: 2px 0;\n  width: 100%;\n  height: 2.5em;\n  background-color: white;\n  border-radius: 3px;\n  border-width: 1px;\n} ._information {\n  color: #6A6A6A;\n  font-size: 14px;\n  font-style: italic;\n  line-height: 1.5;\n  text-align: justify;\n} .language {\n  width: 100px;\n  height: 1.75em;\n  float: right;\n} #submit {\n  margin-top: 10px;\n  widt: 150px;\n  height: 2em;\n  background-color: white;\n  border-width: 1px;\n  border-radius: 3px;\n} #submit:hover {\n  background-color: lightgray;\n}"
+          }
+        },
+        "elements": [
+          {
+            "type": "meta",
+            "config": {
+              "css": {
+                "style": "justify-content: space-between;"
+              }
+            },
+            "parts": [
+              {
+                "name": "language",
+                "config": {
+                  "css": {
+                    "classes": ["language"]
+                  }
+                }
+              },
+              {
+                "name": "name",
+                "config": {
+                  "css": {
+                    "style": "font-size: 24px; font-weight: 700; margin: 10px 0;"
+                  }
+                }
+              },
+              {
+                "name": "description",
+                "config": {
+                  "css": {
+                    "style": "font-size: 16px; font-weight: 300; line-height: 1.5;"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "category",
+            "id": "_cat-1_"
+          },
+          {
+            "type": "attribute",
+            "name": "name",
+            "parts": [
+              {
+                "name": "label"
+              },
+              {
+                "name": "input"
+              },
+              {
+                "name": "information"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
