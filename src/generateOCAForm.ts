@@ -154,9 +154,13 @@ export const generateOCAForm = async (
             const control = structure.controls.find(
               el => el.name == element.name
             )
-            generateAttribute(control, config, data, element).then(parts => {
-              parts.forEach(partEl => elementEl.appendChild(partEl))
-            })
+            const parts = await generateAttribute(
+              control,
+              config,
+              data,
+              element
+            )
+            parts.forEach(partEl => elementEl.appendChild(partEl))
             break
           }
           case 'cardinalityManager': {
@@ -388,14 +392,16 @@ export const generateOCAForm = async (
 
     controlInputChanged(controlName: string) {
       const capturedData = this.captureFormData()
-      this.structure.controls.forEach(c => {
-        if (c.dependencies?.includes(controlName)) {
-          this.evaluateControlCondition(c, capturedData)
-        }
-      })
+      Promise.all(
+        this.structure.controls.map(c => {
+          if (c.dependencies?.includes(controlName)) {
+            return this.evaluateControlCondition(c, capturedData)
+          }
+        })
+      )
     }
 
-    evaluateControlCondition(
+    async evaluateControlCondition(
       control: Structure['controls'][0],
       capturedData: Data = {}
     ) {
@@ -417,7 +423,12 @@ export const generateOCAForm = async (
 
       let controlDiv: HTMLElement
       while (!controlDiv) {
-        let node: HTMLElement = this.form.querySelector(`#${control.name}`)
+        let node: HTMLElement
+        if (control.cardinality) {
+          node = this.form.querySelector(`#${control.name}\\[\\]`)
+        } else {
+          node = this.form.querySelector(`#${control.name}`)
+        }
         while (!node.classList.contains('_control')) {
           node = node.parentElement
         }
@@ -425,8 +436,8 @@ export const generateOCAForm = async (
       }
       if (evaluateCondition(condition)) {
         this.hiddenControls.delete(control.name)
-        controlDiv.style.display = null
 
+        /*
         if (control.reference) {
           const refEl = this.form.querySelector(
             `._reference#${control.name}`
@@ -439,15 +450,28 @@ export const generateOCAForm = async (
             }
           })
         }
+        */
 
-        Array.from(controlDiv.getElementsByClassName('_input')).forEach(el => {
-          if (control.conformance === 'M') {
-            el.setAttribute('required', '')
-          }
-        })
+        if (control.cardinality) {
+          const cardinalityManagerEl: HTMLElement = this.form.querySelector(
+            `._cardinality-manager\\[${control.name}\\]`
+          )
+          cardinalityManagerEl.style.display = null
+        }
+        if (controlDiv) {
+          controlDiv.style.display = null
+          Array.from(controlDiv.getElementsByClassName('_input')).forEach(
+            el => {
+              if (control.conformance === 'M') {
+                el.setAttribute('required', '')
+              }
+            }
+          )
+        }
       } else {
         this.hiddenControls.add(control.name)
 
+        /*
         if (control.reference) {
           const refEl = this.form.querySelector(
             `._reference#${control.name}`
@@ -458,11 +482,22 @@ export const generateOCAForm = async (
               .removeAttribute('required')
           })
         }
+        */
 
-        controlDiv.style.display = 'none'
-        Array.from(controlDiv.getElementsByClassName('_input')).forEach(el => {
-          el.removeAttribute('required')
-        })
+        if (control.cardinality) {
+          const cardinalityManagerEl: HTMLElement = this.form.querySelector(
+            `._cardinality-manager\\[${control.name}\\]`
+          )
+          cardinalityManagerEl.style.display = 'none'
+        }
+        if (controlDiv) {
+          controlDiv.style.display = 'none'
+          Array.from(controlDiv.getElementsByClassName('_input')).forEach(
+            el => {
+              el.removeAttribute('required')
+            }
+          )
+        }
       }
     }
 
@@ -529,11 +564,13 @@ export const generateOCAForm = async (
 
     connectedCallback() {
       const capturedData = this.captureFormData()
-      this.structure.controls.forEach(c => {
-        if (c.condition) {
-          this.evaluateControlCondition(c, capturedData)
-        }
-      })
+      Promise.all(
+        this.structure.controls.map(c => {
+          if (c.condition) {
+            return this.evaluateControlCondition(c, capturedData)
+          }
+        })
+      )
     }
 
     attributeChangedCallback(
@@ -716,9 +753,8 @@ const generateAttribute = (
               defaultLanguage: config.defaultLanguage,
               ocaRepoHostUrl: config.ocaRepoHostUrl
             }
-            if (part.layout) {
-              // controlInputConfig['formLayout'] =
-              //   structure.formLayout.reference_layouts[part.layout]
+            if (control.reference) {
+              controlInputConfig['formLayout'] = control.reference.formLayout
             }
             const inputEl = await generateControlInput(
               attr,
