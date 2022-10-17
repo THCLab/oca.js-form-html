@@ -174,6 +174,7 @@ export const generateOCAForm = async (
             )
             const addBtn = document.createElement('button')
             addBtn.type = 'button'
+            addBtn.classList.add('cardinality-btn')
             addBtn.setAttribute('t', 'add')
             addBtn.setAttribute('attribute-name', managerElement.element.name)
             const control = structure.controls.find(
@@ -221,6 +222,14 @@ export const generateOCAForm = async (
 
     form: HTMLFormElement
     hiddenControls: Set<string>
+    widgets: {
+      signaturePads: {
+        [control: string]: any
+      }
+      qrCodeScanners: {
+        [control: string]: any
+      }
+    }
 
     static get observedAttributes() {
       return ['language', 'structure']
@@ -230,6 +239,10 @@ export const generateOCAForm = async (
       super()
       this.structure = null
       this.hiddenControls = new Set()
+      this.widgets = {
+        signaturePads: {},
+        qrCodeScanners: {}
+      }
       const shadow = this.attachShadow({ mode: 'open' })
 
       const template = document.createElement('template')
@@ -269,8 +282,26 @@ export const generateOCAForm = async (
       }
 
       this.form
-        .querySelectorAll('button')
+        .querySelectorAll('button.cardinality-btn')
         .forEach(this.cardinalityManagerBtnClicked.bind(this))
+
+      this.form
+        .querySelectorAll('button.signature-pad-btn')
+        .forEach((btn) => {
+          btn.addEventListener('click', () => {
+            this.widgets.signaturePads[btn.getAttribute('attribute-name')].clear()
+          })
+        })
+
+      const signaturePadScript = document.createElement('script')
+      signaturePadScript.src = 'https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js'
+      this.form.appendChild(signaturePadScript)
+      signaturePadScript.onload = () => {
+        this.form
+          .querySelectorAll('script.widget.signature-pad').forEach(script => {
+          eval(script.innerHTML)
+        })
+      }
     }
 
     flaggedToggleHandler(showFlagged, el) {
@@ -319,6 +350,7 @@ export const generateOCAForm = async (
               attrEl.classList.add('_control')
               const removeBtn = document.createElement('button')
               removeBtn.type = 'button'
+              removeBtn.classList.add('cardinality-btn')
               removeBtn.setAttribute('t', 'remove')
               removeBtn.setAttribute(
                 'attribute-name',
@@ -536,12 +568,25 @@ export const generateOCAForm = async (
             break
           }
           case 'Binary': {
-            const file = formData.get(c.name) as Blob
-            if (file.size > 0) {
-              const reader = new FileReader()
-              reader.readAsDataURL(file)
-              reader.onload = () => {
-                capturedData[c.name] = reader.result as string
+            const signaturePad = this.widgets.signaturePads[c.name]
+            if (signaturePad && !signaturePad.isEmpty()) {
+              capturedData[c.name] = signaturePad.toDataURL(c.format)
+            } else {
+              const files = formData.getAll(c.name) as Blob[]
+              capturedData[c.name] = []
+              files.forEach(file => {
+                if (file && file.size > 0) {
+                  const reader = new FileReader()
+                  reader.readAsDataURL(file)
+                  reader.onload = () => {
+                    (capturedData[c.name] as string[]).push(
+                      reader.result as string
+                    )
+                  }
+                }
+              })
+              if (!c.multiple) {
+                capturedData[c.name] = capturedData[c.name][0]
               }
             }
             break
@@ -753,10 +798,16 @@ const generateAttribute = (
               defaultLanguage: string
               ocaRepoHostUrl: string
               formLayout?: Structure['formLayout']
+              widget?: 'signature-pad' | 'qr-code-scanner'
             } = {
               showFlagged: config.showFlagged,
               defaultLanguage: config.defaultLanguage,
               ocaRepoHostUrl: config.ocaRepoHostUrl
+            }
+            // @ts-ignore
+            if (part.config && part.config.widget) {
+              // @ts-ignore
+              controlInputConfig.widget = part.config.widget
             }
             if (control.reference) {
               controlInputConfig['formLayout'] = control.reference.formLayout
@@ -822,6 +873,7 @@ const generateControlInput = async (
     showFlagged?: boolean
     defaultLanguage?: string
     ocaRepoHostUrl?: string
+    widget?: 'signature-pad' | 'qr-code-scanner'
   }
 ): Promise<HTMLElement> => {
   let input: HTMLElement = document.createElement('input')
@@ -849,10 +901,51 @@ const generateControlInput = async (
       input.innerHTML = `<slot name="entry" attr-name="${control.name}"></slot>`
       break
     case 'Binary':
-      input.classList.add('_input')
-      input.setAttribute('type', 'file')
-      if (control.format) {
-        input.setAttribute('accept', control.format)
+      if (config.widget && config.widget === 'signature-pad') {
+        input = document.createElement('div')
+        input.classList.add('_input')
+        const canvas = document.createElement('canvas')
+        canvas.style.cssText = 'outline: black 1px solid;'
+        input.appendChild(canvas)
+        const clearBtn = document.createElement('button')
+        clearBtn.classList.add('signature-pad-btn')
+        clearBtn.type = 'button'
+        clearBtn.innerText = 'Clear'
+        clearBtn.style.cssText = 'float: right;'
+        clearBtn.setAttribute('t', 'clear')
+        clearBtn.setAttribute('attribute-name', control.name)
+        input.appendChild(clearBtn)
+        const widgetScript = document.createElement('script')
+        widgetScript.classList.add('widget')
+        widgetScript.classList.add(config.widget)
+        widgetScript.innerHTML = `
+          const inputDiv = this.form.querySelector('#${control.name}')
+          const canvas = this.form.querySelector('#${control.name} > canvas')
+          if (parseInt(inputDiv.parentElement.style.width, 10)) {
+            canvas.width = parseInt(inputDiv.parentElement.style.width, 10)
+          }
+          if (parseInt(inputDiv.parentElement.style.height, 10)) {
+            canvas.height = parseInt(inputDiv.parentElement.style.height, 10) - 20
+          }
+          const signaturePad = new SignaturePad(canvas)
+          this.widgets.signaturePads['${control.name}'] = signaturePad
+        `
+        if (defaultInput) {
+          widgetScript.innerHTML += `
+            signaturePad.fromDataURL("${defaultInput}")
+          `
+        }
+
+        input.appendChild(widgetScript)
+      } else {
+        input.classList.add('_input')
+        input.setAttribute('type', 'file')
+        if (control.format) {
+          input.setAttribute('accept', control.format)
+        }
+        if (control.multiple) {
+          input.setAttribute('multiple', '')
+        }
       }
       break
     case 'Reference':
