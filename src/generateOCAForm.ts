@@ -292,13 +292,40 @@ export const generateOCAForm = async (
             this.widgets.signaturePads[btn.getAttribute('attribute-name')].clear()
           })
         })
+      this.form
+        .querySelectorAll('button.qr-code-scanner-btn')
+        .forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const attributeName = btn.getAttribute('attribute-name')
+            const scannerWidget = this.widgets.qrCodeScanners[attributeName]
+            eval(`
+              document.__proto__.getElementById = (id) => {
+                return this.shadowRoot.getElementById(id)
+              }
+              const html5QrcodeScanner = new Html5QrcodeScanner("qr-reader-${attributeName}", { fps: 10, qrbox: 250 })
+              this.widgets.qrCodeScanners[attributeName].scanner = html5QrcodeScanner
+
+              html5QrcodeScanner.render(${scannerWidget.onSuccess})
+            `)
+          })
+        })
 
       const signaturePadScript = document.createElement('script')
       signaturePadScript.src = 'https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js'
-      this.form.appendChild(signaturePadScript)
+      this.shadowRoot.appendChild(signaturePadScript)
+      const qrCodeScannerScript = document.createElement('script')
+      qrCodeScannerScript.src = 'https://unpkg.com/html5-qrcode'
+      this.shadowRoot.appendChild(qrCodeScannerScript)
+
       signaturePadScript.onload = () => {
         this.form
           .querySelectorAll('script.widget.signature-pad').forEach(script => {
+          eval(script.innerHTML)
+        })
+      }
+      qrCodeScannerScript.onload = () => {
+        this.form
+          .querySelectorAll('script.widget.qr-code-scanner').forEach(script => {
           eval(script.innerHTML)
         })
       }
@@ -596,7 +623,11 @@ export const generateOCAForm = async (
               capturedData[c.name] = (formData.getAll(c.name + '[]') ||
                 []) as string[]
             } else {
-              capturedData[c.name] = (formData.get(c.name) || '') as string
+              if (this.widgets.qrCodeScanners[c.name]) {
+                capturedData[c.name] = (this.shadowRoot.querySelector(`#${c.name} > input`) as HTMLInputElement).value
+              } else {
+                capturedData[c.name] = (formData.get(c.name) || '') as string
+              }
             }
             break
         }
@@ -879,8 +910,54 @@ const generateControlInput = async (
   let input: HTMLElement = document.createElement('input')
   switch (control.type) {
     case 'Text':
-      input.classList.add('_input')
-      input.setAttribute('type', 'text')
+      if (config.widget && config.widget === 'qr-code-scanner') {
+        input = document.createElement('div')
+        input.style.cssText = 'width: 100%;'
+        const captureInput: HTMLElement = document.createElement('input')
+        captureInput.classList.add('_input')
+        captureInput.setAttribute('type', 'text')
+
+        const cameraBtn = document.createElement('button')
+        cameraBtn.classList.add('qr-code-scanner-btn')
+        cameraBtn.type = 'button'
+        cameraBtn.innerText = 'Scan code'
+        cameraBtn.setAttribute('attribute-name', control.name)
+
+        const widgetScript = document.createElement('script')
+        widgetScript.classList.add('widget')
+        widgetScript.classList.add(config.widget)
+        widgetScript.innerHTML = `
+this.widgets.qrCodeScanners['${control.name}'] = {
+  onSuccess: (decodedText, decodedResult) => {
+    const scanner = this.widgets.qrCodeScanners['${control.name}'].scanner.html5Qrcode
+    if (scanner.isScanning) { scanner.stop() }
+    const inputEl = document.getElementById('${control.name}')
+    inputEl.querySelector('._input').value = decodedText
+    inputEl.querySelector('#qr-reader-${control.name}').remove()
+    const qrReader = document.createElement('div')
+    qrReader.id = 'qr-reader-${control.name}'
+    inputEl.appendChild(qrReader)
+  },
+  onFailure: error => {
+    console.warn(\`Code scan error = \$\{error\}\`);
+  }
+}
+        `
+
+        if (defaultInput) {
+          captureInput.setAttribute('value', defaultInput as string)
+        }
+
+        input.appendChild(captureInput)
+        input.appendChild(cameraBtn)
+        const qrReader = document.createElement('div')
+        qrReader.id = `qr-reader-${control.name}`
+        input.appendChild(qrReader)
+        input.appendChild(widgetScript)
+      } else {
+        input.classList.add('_input')
+        input.setAttribute('type', 'text')
+      }
       break
     case 'Numeric':
       input.classList.add('_input')
