@@ -23,6 +23,14 @@
     },
     {
       "capture_base": "EENR0D_y1bFMs8gUF9SW1YbgvcyL3G8VdL7tYYq0p5PM",
+      "type": "spec/overlays/unit/1.0",
+      "metric_system": "SI",
+      "attribute_units": {
+        "name": "m"
+      }
+    },
+    {
+      "capture_base": "EENR0D_y1bFMs8gUF9SW1YbgvcyL3G8VdL7tYYq0p5PM",
       "type": "spec/overlays/label/1.0",
       "language": "en_EN",
       "attribute_labels": {
@@ -102,6 +110,9 @@
             "parts": [
               {
                 "name": "label"
+              },
+              {
+                "name": "unit"
               },
               {
                 "name": "input"

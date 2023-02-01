@@ -17,6 +17,7 @@ describe('#renderOCAForm()', () => {
 
     expect(controls.length).to.eq(1)
     expect(controls[0].querySelector('._label > slot').innerHTML).to.eq('Name:')
+    expect(controls[0].querySelector('._unit').innerHTML).to.eq('[SI:m]')
     expect(controls[0].querySelector('._information > slot').innerHTML).to.eq(
       'Provide your name'
     )

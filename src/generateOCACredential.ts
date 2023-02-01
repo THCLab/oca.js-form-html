@@ -299,6 +299,14 @@ export const generateOCACredential = async (
                     el.innerText = attr.translations[language].label
                     break
                   }
+                  case 'unit': {
+                    const attr = structure.controls.find(
+                      el => el.name == element.name
+                    )
+                    el = document.createElement('span')
+                    el.innerText = `${attr.metric_system}:${attr.unit}`
+                    break
+                  }
                   case 'information': {
                     const attr = structure.controls.find(
                       el => el.name == element.name

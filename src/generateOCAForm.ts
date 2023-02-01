@@ -724,6 +724,11 @@ const generateAttribute = (
           partEl.setAttribute('for', attr.name)
           partEl.innerHTML = `<slot name="control" part="label" attr-name="${attr.name}"></slot>`
           break
+        case 'unit':
+          partEl = document.createElement('span')
+          partEl.classList.add('_unit')
+          partEl.innerHTML = `[${attr.metric_system}:${attr.unit}]`
+          break
         case 'input':
           if (attr.type === 'Select' || attr.type === 'SelectMultiple') {
             partEl = await generateControlInput(
