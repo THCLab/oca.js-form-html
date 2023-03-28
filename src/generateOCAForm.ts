@@ -425,9 +425,9 @@ export const generateOCAForm = async (
       while (!controlDiv) {
         let node: HTMLElement
         if (control.cardinality) {
-          node = this.form.querySelector(`#${control.name}\\[\\]`)
+          node = this.form.querySelector(`#${control.name.replace(/\./g, '\\.')}\\[\\]`)
         } else {
-          node = this.form.querySelector(`#${control.name}`)
+          node = this.form.querySelector(`#${control.name.replace(/\./g, '\\.')}`)
         }
         while (!node.classList.contains('_control')) {
           node = node.parentElement
