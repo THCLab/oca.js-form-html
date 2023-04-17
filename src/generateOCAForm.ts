@@ -599,25 +599,35 @@ export const generateOCAForm = async (
           }
           case 'Binary': {
             const signaturePad = this.widgets.signaturePads[c.name]
-            if (signaturePad && !signaturePad.isEmpty()) {
-              capturedData[c.name] = signaturePad.toDataURL(c.format)
+            if (signaturePad) {
+              if (!signaturePad.isEmpty()) {
+                capturedData[c.name] = signaturePad.toDataURL(c.format)
+              }
             } else {
               const files = formData.getAll(c.name) as Blob[]
               capturedData[c.name] = []
+              const promises: Promise<string>[] = []
               files.forEach(file => {
                 if (file && file.size > 0) {
-                  const reader = new FileReader()
-                  reader.readAsDataURL(file)
-                  reader.onload = () => {
-                    ;(capturedData[c.name] as string[]).push(
-                      reader.result as string
-                    )
-                  }
+                  promises.push(
+                    new Promise(resolve => {
+                      const reader = new FileReader()
+                      reader.readAsDataURL(file)
+                      reader.onload = () => {
+                        resolve(reader.result as string)
+                      }
+                    })
+                  )
                 }
               })
-              if (!c.multiple) {
-                capturedData[c.name] = capturedData[c.name][0]
-              }
+
+              Promise.all(promises).then(values => {
+                if (c.multiple) {
+                  capturedData[c.name] = values
+                } else {
+                  capturedData[c.name] = values[0]
+                }
+              })
             }
             break
           }
