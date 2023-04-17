@@ -625,7 +625,7 @@ export const generateOCAForm = async (
                 if (c.multiple) {
                   capturedData[c.name] = values
                 } else {
-                  capturedData[c.name] = values[0]
+                  capturedData[c.name] = values[0] || ''
                 }
               })
             }
