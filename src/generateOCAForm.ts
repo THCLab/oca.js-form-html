@@ -285,20 +285,16 @@ export const generateOCAForm = async (
         .querySelectorAll('button.cardinality-btn')
         .forEach(this.cardinalityManagerBtnClicked.bind(this))
 
-      this.form
-        .querySelectorAll('button.signature-pad-btn')
-        .forEach((btn) => {
-          btn.addEventListener('click', () => {
-            this.widgets.signaturePads[btn.getAttribute('attribute-name')].clear()
-          })
+      this.form.querySelectorAll('button.signature-pad-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          this.widgets.signaturePads[btn.getAttribute('attribute-name')].clear()
         })
-      this.form
-        .querySelectorAll('button.qr-code-scanner-btn')
-        .forEach((btn) => {
-          btn.addEventListener('click', () => {
-            const attributeName = btn.getAttribute('attribute-name')
-            const scannerWidget = this.widgets.qrCodeScanners[attributeName]
-            eval(`
+      })
+      this.form.querySelectorAll('button.qr-code-scanner-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const attributeName = btn.getAttribute('attribute-name')
+          const scannerWidget = this.widgets.qrCodeScanners[attributeName]
+          eval(`
               document.__proto__.getElementById = (id) => {
                 return this.shadowRoot.getElementById(id)
               }
@@ -307,11 +303,12 @@ export const generateOCAForm = async (
 
               html5QrcodeScanner.render(${scannerWidget.onSuccess})
             `)
-          })
         })
+      })
 
       const signaturePadScript = document.createElement('script')
-      signaturePadScript.src = 'https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js'
+      signaturePadScript.src =
+        'https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js'
       this.shadowRoot.appendChild(signaturePadScript)
       const qrCodeScannerScript = document.createElement('script')
       qrCodeScannerScript.src = 'https://unpkg.com/html5-qrcode'
@@ -319,15 +316,17 @@ export const generateOCAForm = async (
 
       signaturePadScript.onload = () => {
         this.form
-          .querySelectorAll('script.widget.signature-pad').forEach(script => {
-          eval(script.innerHTML)
-        })
+          .querySelectorAll('script.widget.signature-pad')
+          .forEach(script => {
+            eval(script.innerHTML)
+          })
       }
       qrCodeScannerScript.onload = () => {
         this.form
-          .querySelectorAll('script.widget.qr-code-scanner').forEach(script => {
-          eval(script.innerHTML)
-        })
+          .querySelectorAll('script.widget.qr-code-scanner')
+          .forEach(script => {
+            eval(script.innerHTML)
+          })
       }
     }
 
@@ -484,9 +483,13 @@ export const generateOCAForm = async (
       while (!controlDiv) {
         let node: HTMLElement
         if (control.cardinality) {
-          node = this.form.querySelector(`#${control.name.replace(/\./g, '\\.')}\\[\\]`)
+          node = this.form.querySelector(
+            `#${control.name.replace(/\./g, '\\.')}\\[\\]`
+          )
         } else {
-          node = this.form.querySelector(`#${control.name.replace(/\./g, '\\.')}`)
+          node = this.form.querySelector(
+            `#${control.name.replace(/\./g, '\\.')}`
+          )
         }
         while (!node.classList.contains('_control')) {
           node = node.parentElement
@@ -606,7 +609,7 @@ export const generateOCAForm = async (
                   const reader = new FileReader()
                   reader.readAsDataURL(file)
                   reader.onload = () => {
-                    (capturedData[c.name] as string[]).push(
+                    ;(capturedData[c.name] as string[]).push(
                       reader.result as string
                     )
                   }
@@ -624,7 +627,11 @@ export const generateOCAForm = async (
                 []) as string[]
             } else {
               if (this.widgets.qrCodeScanners[c.name]) {
-                capturedData[c.name] = (this.shadowRoot.querySelector(`#${c.name} > input`) as HTMLInputElement).value
+                capturedData[c.name] = (
+                  this.shadowRoot.querySelector(
+                    `#${c.name} > input`
+                  ) as HTMLInputElement
+                ).value
               } else {
                 capturedData[c.name] = (formData.get(c.name) || '') as string
               }
@@ -835,11 +842,14 @@ const generateAttribute = (
               defaultLanguage: config.defaultLanguage,
               ocaRepoHostUrl: config.ocaRepoHostUrl
             }
+
+            /* eslint-disable */
             // @ts-ignore
             if (part.config && part.config.widget) {
               // @ts-ignore
               controlInputConfig.widget = part.config.widget
             }
+            /* eslint-enable */
             if (control.reference) {
               controlInputConfig['formLayout'] = control.reference.formLayout
             }
@@ -939,7 +949,7 @@ this.widgets.qrCodeScanners['${control.name}'] = {
     inputEl.appendChild(qrReader)
   },
   onFailure: error => {
-    console.warn(\`Code scan error = \$\{error\}\`);
+    console.warn(\`Code scan error = $\{error}\`);
   }
 }
         `
