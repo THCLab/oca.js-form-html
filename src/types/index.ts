@@ -5,4 +5,4 @@ export type Data = {
   [key: string]: DataValue
 }
 
-export type DataValue = string | string[] | Data | Data[]
+export type DataValue = string | string[] | File | File[] | Data | Data[]

@@ -601,33 +601,28 @@ export const generateOCAForm = async (
             const signaturePad = this.widgets.signaturePads[c.name]
             if (signaturePad) {
               if (!signaturePad.isEmpty()) {
-                capturedData[c.name] = signaturePad.toDataURL(c.format)
+                const b64 = signaturePad.toDataURL(c.format)
+                const bstr = atob(b64.split('base64,')[1])
+                let n = bstr.length
+                const u8arr = new Uint8Array(n)
+                while (n--) {
+                  u8arr[n] = bstr.charCodeAt(n)
+                }
+
+                const file = new File([u8arr], `${c.name}.png`, {
+                  type: 'image/png'
+                })
+                capturedData[c.name] = file
               }
             } else {
-              const files = formData.getAll(c.name) as Blob[]
-              capturedData[c.name] = []
-              const promises: Promise<string>[] = []
-              files.forEach(file => {
-                if (file && file.size > 0) {
-                  promises.push(
-                    new Promise(resolve => {
-                      const reader = new FileReader()
-                      reader.readAsDataURL(file)
-                      reader.onload = () => {
-                        resolve(reader.result as string)
-                      }
-                    })
-                  )
-                }
-              })
+              const files = formData.getAll(c.name) as File[]
+              const capturedFiles = files.filter(f => f.size > 0)
 
-              Promise.all(promises).then(values => {
-                if (c.multiple) {
-                  capturedData[c.name] = values
-                } else {
-                  capturedData[c.name] = values[0] || ''
-                }
-              })
+              if (c.multiple) {
+                capturedData[c.name] = capturedFiles
+              } else {
+                capturedData[c.name] = capturedFiles[0] || ''
+              }
             }
             break
           }
@@ -1028,9 +1023,17 @@ this.widgets.qrCodeScanners['${control.name}'] = {
           this.widgets.signaturePads['${control.name}'] = signaturePad
         `
         if (defaultInput) {
-          widgetScript.innerHTML += `
-            signaturePad.fromDataURL("${defaultInput}")
-          `
+          ;(defaultInput as File).arrayBuffer().then(buffer => {
+            const binary = new Uint8Array(buffer).reduce(
+              (data, byte) => data + String.fromCharCode(byte),
+              ''
+            )
+            const base64 = btoa(binary)
+
+            widgetScript.innerHTML += `
+              signaturePad.fromDataURL("data:image/png;base64,${base64}")
+            `
+          })
         }
 
         input.appendChild(widgetScript)
